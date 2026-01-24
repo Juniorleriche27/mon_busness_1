@@ -1,0 +1,12 @@
+# Secrets (do not commit real keys)
+.streamlit/secrets.toml
+
+# Python
+__pycache__/
+*.pyc
+
+# Env
+.conda/
+
+# Editor
+.vscode/
