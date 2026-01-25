@@ -232,6 +232,18 @@ div[data-testid="stForm"] {
   bottom: 0;
   background: #f3f7f7;
   padding-top: 8px;
+  padding-bottom: 8px;
+}
+.sidebar-input .stButton > button {
+  border-radius: 10px;
+  height: 42px;
+  width: 42px;
+  padding: 0;
+}
+.sidebar-input [data-testid="stTextInput"] input {
+  height: 42px;
+  padding-top: 6px;
+  padding-bottom: 6px;
 }
 </style>
 """
@@ -484,9 +496,18 @@ def _render_sales_sidebar():
     st.sidebar.markdown("</div>", unsafe_allow_html=True)
 
     st.sidebar.markdown('<div class="sidebar-input">', unsafe_allow_html=True)
-    user_input = st.sidebar.text_area("Votre question", key="sales_input", height=80)
-    if st.sidebar.button("Envoyer", use_container_width=True):
-        if user_input.strip():
+    with st.sidebar.form("sales_form", clear_on_submit=True):
+        col_input, col_btn = st.columns([5, 1])
+        with col_input:
+            user_input = st.text_input(
+                "Votre question",
+                key="sales_input",
+                label_visibility="collapsed",
+                placeholder="Ecrivez ici...",
+            )
+        with col_btn:
+            submitted = st.form_submit_button("➤")
+        if submitted and user_input.strip():
             reply = _sales_agent_reply(user_input.strip(), st.session_state["sales_chat"])
             st.session_state["sales_chat"].append(
                 {"user": user_input.strip(), "assistant": reply}
