@@ -170,6 +170,19 @@ div[data-testid="stForm"] {
   background: rgba(0,0,0,0.01);
   box-shadow: 0 6px 18px rgba(0,0,0,0.03);
 }
+.form-card {
+  background: #ffffff;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 14px;
+  padding: 16px 16px 6px;
+  margin-bottom: 14px;
+}
+.form-card-title {
+  font-weight: 700;
+  font-size: 1.02rem;
+  margin-bottom: 10px;
+  color: #0f172a;
+}
 
 /* Sidebar */
 .sidebar-card {
@@ -725,6 +738,7 @@ def _format_mb(value):
 
 with st.form("lead_form", clear_on_submit=True):
     st.markdown("### Demander un devis (brief complet)")
+    st.markdown('<div class="form-card"><div class="form-card-title">Identite et contact</div>', unsafe_allow_html=True)
     a, b = st.columns(2)
     with a:
         full_name = st.text_input("Nom complet *", value=st.session_state["full_name"])
@@ -736,9 +750,14 @@ with st.form("lead_form", clear_on_submit=True):
         email = st.text_input("Email *", value=st.session_state["email"])
         if "email" in form_errors:
             st.error("Champ requis")
+    with b:
         country = st.text_input("Pays", value=st.session_state["country"])
         city = st.text_input("Ville", value=st.session_state["city"])
-    with b:
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown('<div class="form-card"><div class="form-card-title">Objectif du portfolio</div>', unsafe_allow_html=True)
+    c, d = st.columns(2)
+    with c:
         objective = st.selectbox(
             "Objectif principal *",
             OBJECTIVE_OPTIONS,
@@ -747,33 +766,35 @@ with st.form("lead_form", clear_on_submit=True):
         role = st.text_input("Poste / rôle visé *", value=st.session_state["role"])
         if "role" in form_errors:
             st.error("Champ requis")
+        deadline = st.selectbox(
+            "Délai souhaité *",
+            DEADLINE_OPTIONS,
+            index=_get_index(DEADLINE_OPTIONS, st.session_state["deadline"] or DEADLINE_OPTIONS[0]),
+        )
+    with d:
         language = st.selectbox(
             "Langue principale",
             LANGUAGE_OPTIONS,
             index=_get_index(LANGUAGE_OPTIONS, st.session_state["language"] or LANGUAGE_OPTIONS[0]),
         )
         language_other = st.text_input("Autre langue (si applicable)", value=st.session_state["language_other"])
-        deadline = st.selectbox(
-            "Délai souhaité *",
-            DEADLINE_OPTIONS,
-            index=_get_index(DEADLINE_OPTIONS, st.session_state["deadline"] or DEADLINE_OPTIONS[0]),
-        )
-
-    st.write("")
-    c, d = st.columns(2)
-    with c:
-        audience = st.text_input(
-            "Cible principale (recruteurs, clients, partenaires)",
-            value=st.session_state["audience"],
-        )
         budget = st.selectbox(
             "Budget estimé",
             BUDGET_OPTIONS,
             index=_get_index(BUDGET_OPTIONS, st.session_state["budget"] or BUDGET_OPTIONS[0]),
         )
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown('<div class="form-card"><div class="form-card-title">Cible, style et valeur</div>', unsafe_allow_html=True)
+    e, f = st.columns(2)
+    with e:
+        audience = st.text_input(
+            "Cible principale (recruteurs, clients, partenaires)",
+            value=st.session_state["audience"],
+        )
         website = st.text_input("Site actuel / LinkedIn / GitHub", value=st.session_state["website"])
-    with d:
         strengths = st.text_input("Tes 2–3 forces clés", value=st.session_state["strengths"])
+    with f:
         projects = st.text_input(
             "Projets à mettre en avant (liens ou titres)",
             value=st.session_state["projects"],
@@ -783,8 +804,13 @@ with st.form("lead_form", clear_on_submit=True):
             STYLE_OPTIONS,
             index=_get_index(STYLE_OPTIONS, st.session_state["style"] or STYLE_OPTIONS[0]),
         )
+        competitors = st.text_input(
+            "Exemples de sites que tu aimes (liens)",
+            value=st.session_state["competitors"],
+        )
+    st.markdown("</div>", unsafe_allow_html=True)
 
-    st.write("")
+    st.markdown('<div class="form-card"><div class="form-card-title">Contexte et objectifs</div>', unsafe_allow_html=True)
     need = st.text_area(
         "Contexte et objectifs (secteur, niveau d’expérience, message à transmettre) *",
         height=140,
@@ -792,6 +818,9 @@ with st.form("lead_form", clear_on_submit=True):
     )
     if "need" in form_errors:
         st.error("Champ requis")
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown('<div class="form-card"><div class="form-card-title">Fichiers et ressources</div>', unsafe_allow_html=True)
     content_assets = st.text_area(
         "Fichiers déjà prêts (CV, photos, logos, textes, références)",
         height=100,
@@ -804,17 +833,16 @@ with st.form("lead_form", clear_on_submit=True):
         accept_multiple_files=True,
         key="uploaded_files",
     )
-    competitors = st.text_input(
-        "Exemples de sites que tu aimes (liens)",
-        value=st.session_state["competitors"],
-    )
+    st.markdown("</div>", unsafe_allow_html=True)
 
+    st.markdown('<div class="form-card"><div class="form-card-title">Consentement</div>', unsafe_allow_html=True)
     consent = st.checkbox(
         "J’accepte d’être recontacté pour cette demande *",
         value=bool(st.session_state["consent"]),
     )
     if "consent" in form_errors:
         st.error("Champ requis")
+    st.markdown("</div>", unsafe_allow_html=True)
     submit = st.form_submit_button("Envoyer")
 
     if submit:
