@@ -277,6 +277,18 @@ def _normalize_list(value):
     return []
 
 
+FX_RATE_CFA_PER_USD = 600
+PRICE_PORTFOLIO_CFA = 29900
+HOSTING_MONTH_CFA = 2000
+HOSTING_YEAR_CFA = 24000
+HOSTING_YEAR_DISCOUNT_CFA = 19900
+
+
+def _format_price(cfa_value):
+    usd_value = cfa_value / FX_RATE_CFA_PER_USD
+    return f"{cfa_value:,} CFA (~${usd_value:.2f})".replace(",", " ")
+
+
 def _cohere_generate(payload):
     cohere_cfg = st.secrets.get("cohere", {})
     api_key = cohere_cfg.get("api_key")
@@ -339,16 +351,72 @@ def _cohere_generate(payload):
     return parsed, model, error
 
 
-def _is_admin():
-    admin_cfg = st.secrets.get("admin", {})
-    if not admin_cfg or not admin_cfg.get("password"):
-        return False
-    st.sidebar.markdown("### Admin")
-    admin_pass = st.sidebar.text_input("Admin password", type="password")
-    return admin_pass == admin_cfg.get("password")
+ADMIN_MODE = bool(st.secrets.get("admin", {}).get("enabled", False))
 
 
-ADMIN_MODE = _is_admin()
+def _sales_agent_reply(user_message, history):
+    cohere_cfg = st.secrets.get("cohere", {})
+    api_key = cohere_cfg.get("api_key")
+    model = cohere_cfg.get("model", "command-a-03-2025")
+    if not api_key:
+        return "Service indisponible pour le moment. Contactez-nous sur WhatsApp."
+
+    co = cohere.ClientV2(api_key)
+    system_prompt = (
+        "You are a strong sales assistant for a portfolio service. "
+        "Answer in French, concise, confident, and helpful. "
+        "Always include prices in CFA and USD in the same sentence. "
+        "Pricing: Portfolio 29,900 CFA (~$49.83). Hosting 2,000 CFA/month (~$3.33) "
+        "or 24,000 CFA/year (~$40.00). Annual discount: 19,900 CFA/year (~$33.17). "
+        "Ask clarifying questions and guide to conversion."
+    )
+
+    messages = [{"role": "system", "content": system_prompt}]
+    for item in history[-6:]:
+        messages.append({"role": "user", "content": item["user"]})
+        messages.append({"role": "assistant", "content": item["assistant"]})
+    messages.append({"role": "user", "content": user_message})
+
+    try:
+        resp = co.chat(model=model, messages=messages)
+        return resp.message.content[0].text
+    except Exception:
+        return "Je peux aider sur le service. Posez votre question ou contactez-nous sur WhatsApp."
+
+
+def _render_sales_sidebar():
+    st.sidebar.markdown("### Assistant commercial")
+    st.sidebar.caption("Questions sur le service, prix et fonctionnement.")
+    st.sidebar.markdown(
+        f"- Portfolio: **{_format_price(PRICE_PORTFOLIO_CFA)}**"
+    )
+    st.sidebar.markdown(
+        f"- Hebergement: **{_format_price(HOSTING_MONTH_CFA)} / mois**"
+    )
+    st.sidebar.markdown(
+        f"- Hebergement annuel: **{_format_price(HOSTING_YEAR_CFA)}**"
+    )
+    st.sidebar.markdown(
+        f"- Offre annuelle: **{_format_price(HOSTING_YEAR_DISCOUNT_CFA)}**"
+    )
+
+    st.session_state.setdefault("sales_chat", [])
+    for msg in st.session_state["sales_chat"]:
+        st.sidebar.markdown(f"**Vous:** {msg['user']}")
+        st.sidebar.markdown(f"**Assistant:** {msg['assistant']}")
+
+    user_input = st.sidebar.text_area("Votre question", key="sales_input", height=80)
+    if st.sidebar.button("Envoyer", use_container_width=True):
+        if user_input.strip():
+            reply = _sales_agent_reply(user_input.strip(), st.session_state["sales_chat"])
+            st.session_state["sales_chat"].append(
+                {"user": user_input.strip(), "assistant": reply}
+            )
+            st.session_state["sales_input"] = ""
+            st.rerun()
+
+
+_render_sales_sidebar()
 
 
 def _send_lead_email(doc, lead_id):
