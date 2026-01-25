@@ -412,10 +412,11 @@ def _sales_agent_reply(user_message, history):
     system_prompt = (
         "You are a strong sales assistant for a portfolio service. "
         "Answer in French, concise, confident, and helpful. "
-        "Always include prices in CFA and USD in the same sentence. "
-        "Pricing: Portfolio 29,900 CFA (~$49.83). Hosting 2,000 CFA/month (~$3.33) "
-        "or 24,000 CFA/year (~$40.00). Annual discount: 19,900 CFA/year (~$33.17). "
-        "Ask clarifying questions and guide to conversion."
+        "Always show prices exactly in this format: '29 900 CFA (~$49.83)'. "
+        "Never omit the $ symbol. "
+        "Pricing: Portfolio 29 900 CFA (~$49.83). Hosting 2 000 CFA/mois (~$3.33). "
+        "Hosting annuel 24 000 CFA/an (~$40.00). Offre annuelle 19 900 CFA/an (~$33.17). "
+        "Ask one short clarifying question and guide to conversion."
     )
 
     messages = [{"role": "system", "content": system_prompt}]
