@@ -12,6 +12,7 @@ from bson import ObjectId
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
 import smtplib
+import html
 from email.message import EmailMessage
 
 
@@ -217,30 +218,34 @@ div[data-testid="stForm"] {
   padding: 12px 14px;
   margin-bottom: 12px;
 }
-.stSidebar [data-testid="stVerticalBlock"] {
-  height: 100vh;
-  padding-bottom: 0;
-  overflow: hidden;
-}
-.sidebar-root {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-.sidebar-chat {
-  flex: 1;
-  min-height: 0;
+.sidebar-chat-box {
+  max-height: 42vh;
   overflow-y: auto;
-  padding-right: 4px;
-  padding-bottom: 8px;
+  background: #ffffff;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
 }
-.sidebar-input {
-  margin-top: auto;
+.sidebar-chat-msg {
+  margin-bottom: 8px;
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+.sidebar-chat-user {
+  font-weight: 700;
+  color: #0f172a;
+}
+.sidebar-chat-bot {
+  color: #1f2937;
+}
+.stSidebar div[data-testid="stForm"] {
   position: sticky;
   bottom: 0;
   background: #f3f7f7;
-  padding-top: 8px;
-  padding-bottom: 8px;
+  padding: 8px;
+  border-radius: 12px;
+  z-index: 2;
 }
 .sidebar-input .stButton > button {
   border-radius: 10px;
@@ -472,8 +477,27 @@ def _sales_agent_reply(user_message, history):
         return "Je peux aider sur le service. Posez votre question ou contactez-nous sur WhatsApp."
 
 
+def _render_chat_html(messages, typing_text=""):
+    rows = []
+    for item in messages:
+        user = html.escape(item.get("user", ""))
+        assistant = html.escape(item.get("assistant", ""))
+        rows.append(
+            f'<div class="sidebar-chat-msg"><span class="sidebar-chat-user">Vous:</span> {user}</div>'
+        )
+        rows.append(
+            f'<div class="sidebar-chat-msg"><span class="sidebar-chat-user">Assistant:</span> '
+            f'<span class="sidebar-chat-bot">{assistant}</span></div>'
+        )
+    if typing_text:
+        rows.append(
+            f'<div class="sidebar-chat-msg"><span class="sidebar-chat-user">Assistant:</span> '
+            f'<span class="sidebar-chat-bot">{html.escape(typing_text)}</span></div>'
+        )
+    return '<div class="sidebar-chat-box">' + "".join(rows) + "</div>"
+
+
 def _render_sales_sidebar():
-    st.sidebar.markdown('<div class="sidebar-root">', unsafe_allow_html=True)
     st.sidebar.markdown(
         """
         <div class="sidebar-card">
@@ -501,14 +525,13 @@ def _render_sales_sidebar():
         unsafe_allow_html=True,
     )
 
-    st.sidebar.markdown('<div class="sidebar-chat">', unsafe_allow_html=True)
     st.session_state.setdefault("sales_chat", [])
-    for msg in st.session_state["sales_chat"]:
-        st.sidebar.markdown(f"**Vous:** {msg['user']}")
-        st.sidebar.markdown(f"**Assistant:** {msg['assistant']}")
-    st.sidebar.markdown("</div>", unsafe_allow_html=True)
+    chat_placeholder = st.sidebar.empty()
+    chat_placeholder.markdown(
+        _render_chat_html(st.session_state["sales_chat"]),
+        unsafe_allow_html=True,
+    )
 
-    st.sidebar.markdown('<div class="sidebar-input">', unsafe_allow_html=True)
     with st.sidebar.form("sales_form", clear_on_submit=True):
         col_input, col_btn = st.columns([5, 1])
         with col_input:
@@ -520,14 +543,22 @@ def _render_sales_sidebar():
             )
         with col_btn:
             submitted = st.form_submit_button(">")
+
         if submitted and user_input.strip():
             reply = _sales_agent_reply(user_input.strip(), st.session_state["sales_chat"])
+            typing = ""
+            for i in range(0, len(reply), 3):
+                typing = reply[: i + 3]
+                chat_placeholder.markdown(
+                    _render_chat_html(st.session_state["sales_chat"], typing_text=typing),
+                    unsafe_allow_html=True,
+                )
+                time.sleep(0.02)
+
             st.session_state["sales_chat"].append(
                 {"user": user_input.strip(), "assistant": reply}
             )
             st.rerun()
-    st.sidebar.markdown("</div>", unsafe_allow_html=True)
-    st.sidebar.markdown("</div>", unsafe_allow_html=True)
 
 
 _render_sales_sidebar()
