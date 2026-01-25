@@ -221,18 +221,20 @@ div[data-testid="stForm"] {
   height: 100vh;
   display: flex;
   flex-direction: column;
+  padding-bottom: 0;
 }
 .sidebar-chat {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding-right: 4px;
 }
 .sidebar-input {
   position: sticky;
   bottom: 0;
-  background: #f3f7f7;
-  padding-top: 8px;
-  padding-bottom: 8px;
+  background: transparent;
+  padding-top: 6px;
+  padding-bottom: 6px;
 }
 .sidebar-input .stButton > button {
   border-radius: 10px;
@@ -244,6 +246,10 @@ div[data-testid="stForm"] {
   height: 42px;
   padding-top: 6px;
   padding-bottom: 6px;
+}
+.sidebar-input [data-testid="stHorizontalBlock"] {
+  align-items: center;
+  gap: 8px;
 }
 </style>
 """
