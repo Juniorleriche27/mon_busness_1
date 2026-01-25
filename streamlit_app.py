@@ -412,7 +412,6 @@ def _render_sales_sidebar():
             st.session_state["sales_chat"].append(
                 {"user": user_input.strip(), "assistant": reply}
             )
-            st.session_state["sales_input"] = ""
             st.rerun()
 
 
