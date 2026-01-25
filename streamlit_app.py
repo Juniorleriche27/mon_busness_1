@@ -219,22 +219,28 @@ div[data-testid="stForm"] {
 }
 .stSidebar [data-testid="stVerticalBlock"] {
   height: 100vh;
+  padding-bottom: 0;
+  overflow: hidden;
+}
+.sidebar-root {
+  height: 100%;
   display: flex;
   flex-direction: column;
-  padding-bottom: 0;
 }
 .sidebar-chat {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   padding-right: 4px;
+  padding-bottom: 8px;
 }
 .sidebar-input {
+  margin-top: auto;
   position: sticky;
   bottom: 0;
-  background: transparent;
-  padding-top: 6px;
-  padding-bottom: 6px;
+  background: #f3f7f7;
+  padding-top: 8px;
+  padding-bottom: 8px;
 }
 .sidebar-input .stButton > button {
   border-radius: 10px;
@@ -467,6 +473,7 @@ def _sales_agent_reply(user_message, history):
 
 
 def _render_sales_sidebar():
+    st.sidebar.markdown('<div class="sidebar-root">', unsafe_allow_html=True)
     st.sidebar.markdown(
         """
         <div class="sidebar-card">
@@ -512,13 +519,14 @@ def _render_sales_sidebar():
                 placeholder="Ecrivez ici...",
             )
         with col_btn:
-            submitted = st.form_submit_button("➤")
+            submitted = st.form_submit_button(">")
         if submitted and user_input.strip():
             reply = _sales_agent_reply(user_input.strip(), st.session_state["sales_chat"])
             st.session_state["sales_chat"].append(
                 {"user": user_input.strip(), "assistant": reply}
             )
             st.rerun()
+    st.sidebar.markdown("</div>", unsafe_allow_html=True)
     st.sidebar.markdown("</div>", unsafe_allow_html=True)
 
 
