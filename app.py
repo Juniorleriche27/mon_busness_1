@@ -170,6 +170,33 @@ div[data-testid="stForm"] {
   background: rgba(0,0,0,0.01);
   box-shadow: 0 6px 18px rgba(0,0,0,0.03);
 }
+
+/* Sidebar */
+.sidebar-card {
+  background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+  color: #ffffff;
+  padding: 14px 16px;
+  border-radius: 14px;
+  margin-bottom: 12px;
+  box-shadow: 0 8px 20px rgba(15, 118, 110, 0.25);
+}
+.sidebar-card h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+.sidebar-muted {
+  color: rgba(255,255,255,0.85);
+  font-size: 0.9rem;
+  margin-top: 4px;
+}
+.sidebar-section {
+  background: #ffffff;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
 </style>
 """
 st.markdown(CSS, unsafe_allow_html=True)
@@ -385,19 +412,31 @@ def _sales_agent_reply(user_message, history):
 
 
 def _render_sales_sidebar():
-    st.sidebar.markdown("### Assistant commercial")
-    st.sidebar.caption("Questions sur le service, prix et fonctionnement.")
     st.sidebar.markdown(
-        f"- Portfolio: **{_format_price(PRICE_PORTFOLIO_CFA)}**"
+        """
+        <div class="sidebar-card">
+          <h3>Assistant commercial</h3>
+          <div class="sidebar-muted">Questions sur le service, prix et fonctionnement.</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
     st.sidebar.markdown(
-        f"- Hebergement: **{_format_price(HOSTING_MONTH_CFA)} / mois**"
-    )
-    st.sidebar.markdown(
-        f"- Hebergement annuel: **{_format_price(HOSTING_YEAR_CFA)}**"
-    )
-    st.sidebar.markdown(
-        f"- Offre annuelle: **{_format_price(HOSTING_YEAR_DISCOUNT_CFA)}**"
+        f"""
+        <div class="sidebar-section">
+          <strong>Portfolio</strong><br />{_format_price(PRICE_PORTFOLIO_CFA)}
+        </div>
+        <div class="sidebar-section">
+          <strong>Hebergement</strong><br />{_format_price(HOSTING_MONTH_CFA)} / mois
+        </div>
+        <div class="sidebar-section">
+          <strong>Hebergement annuel</strong><br />{_format_price(HOSTING_YEAR_CFA)}
+        </div>
+        <div class="sidebar-section">
+          <strong>Offre annuelle</strong><br />{_format_price(HOSTING_YEAR_DISCOUNT_CFA)}
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
     st.session_state.setdefault("sales_chat", [])
