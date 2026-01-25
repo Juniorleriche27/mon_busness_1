@@ -217,6 +217,22 @@ div[data-testid="stForm"] {
   padding: 12px 14px;
   margin-bottom: 12px;
 }
+.stSidebar [data-testid="stVerticalBlock"] {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.sidebar-chat {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.sidebar-input {
+  position: sticky;
+  bottom: 0;
+  background: #f3f7f7;
+  padding-top: 8px;
+}
 </style>
 """
 st.markdown(CSS, unsafe_allow_html=True)
@@ -460,11 +476,14 @@ def _render_sales_sidebar():
         unsafe_allow_html=True,
     )
 
+    st.sidebar.markdown('<div class="sidebar-chat">', unsafe_allow_html=True)
     st.session_state.setdefault("sales_chat", [])
     for msg in st.session_state["sales_chat"]:
         st.sidebar.markdown(f"**Vous:** {msg['user']}")
         st.sidebar.markdown(f"**Assistant:** {msg['assistant']}")
+    st.sidebar.markdown("</div>", unsafe_allow_html=True)
 
+    st.sidebar.markdown('<div class="sidebar-input">', unsafe_allow_html=True)
     user_input = st.sidebar.text_area("Votre question", key="sales_input", height=80)
     if st.sidebar.button("Envoyer", use_container_width=True):
         if user_input.strip():
@@ -473,6 +492,7 @@ def _render_sales_sidebar():
                 {"user": user_input.strip(), "assistant": reply}
             )
             st.rerun()
+    st.sidebar.markdown("</div>", unsafe_allow_html=True)
 
 
 _render_sales_sidebar()
