@@ -183,6 +183,13 @@ div[data-testid="stForm"] {
   margin-bottom: 10px;
   color: #0f172a;
 }
+.form-title {
+  text-align: center;
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 8px 0 16px;
+}
 
 /* Sidebar */
 .sidebar-card {
@@ -737,7 +744,7 @@ def _format_mb(value):
     return f"{value / (1024 * 1024):.1f} MB"
 
 with st.form("lead_form", clear_on_submit=True):
-    st.markdown("### Demander un devis (brief complet)")
+    st.markdown('<div class="form-title">Vos informations pour commencer</div>', unsafe_allow_html=True)
     st.markdown('<div class="form-card"><div class="form-card-title">Identite et contact</div>', unsafe_allow_html=True)
     a, b = st.columns(2)
     with a:
