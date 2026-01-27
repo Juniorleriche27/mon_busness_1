@@ -1215,7 +1215,8 @@ with st.form("lead_form", clear_on_submit=True):
 
             for key in FORM_KEYS:
                 st.session_state[key] = ""
-            st.session_state["uploaded_files"] = []
+            if "uploaded_files" in st.session_state:
+                st.session_state.pop("uploaded_files")
 
 
 # Footer
