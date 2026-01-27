@@ -1053,26 +1053,43 @@ with st.form("lead_form", clear_on_submit=True):
                 "created_at": datetime.now(timezone.utc),
             }
 
+            res = None
+            db_ok = False
             try:
                 res = leads.insert_one(doc)
+                db_ok = True
             except Exception:
-                st.error("Le service est temporairement indisponible. Merci de reessayer plus tard.")
-                st.stop()
+                db_ok = False
 
-            st.success(f"Demande envoyee. Reference: {res.inserted_id}")
-            st.info("Brief recu. Je vous contacte sous 24-48h.")
+            ref_id = str(res.inserted_id) if res else "email-only"
+            email_ok, email_error = _send_lead_email(doc, ref_id)
 
-            email_ok, email_error = _send_lead_email(doc, str(res.inserted_id))
-            if not email_ok:
-                leads.update_one(
-                    {"_id": res.inserted_id},
-                    {"$set": {"email_status": "failed", "email_error": email_error}},
-                )
+            if db_ok:
+                st.success(f"Demande envoyee. Reference: {res.inserted_id}")
+                st.info("Brief recu. Je vous contacte sous 24-48h.")
             else:
-                leads.update_one(
-                    {"_id": res.inserted_id},
-                    {"$set": {"email_status": "sent"}},
-                )
+                if email_ok:
+                    st.success("Demande recue. Nous avons bien recu votre message.")
+                    st.info("Base temporairement indisponible. Votre demande a ete envoyee par email.")
+                else:
+                    st.error("Le service est temporairement indisponible. Merci de reessayer plus tard.")
+                    st.stop()
+
+            if not email_ok:
+                if db_ok:
+                    leads.update_one(
+                        {"_id": res.inserted_id},
+                        {"$set": {"email_status": "failed", "email_error": email_error}},
+                    )
+            else:
+                if db_ok:
+                    leads.update_one(
+                        {"_id": res.inserted_id},
+                        {"$set": {"email_status": "sent"}},
+                    )
+
+            if not db_ok:
+                st.stop()
 
             local_score = _local_quality_score(doc)
             ai_payload = _build_ai_payload(doc)
