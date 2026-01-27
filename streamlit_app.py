@@ -1057,7 +1057,7 @@ with st.form("lead_form", clear_on_submit=True):
                 res = leads.insert_one(doc)
             except Exception:
                 st.error("Le service est temporairement indisponible. Merci de reessayer plus tard.")
-                return
+                st.stop()
 
             st.success(f"Demande envoyee. Reference: {res.inserted_id}")
             st.info("Brief recu. Je vous contacte sous 24-48h.")
