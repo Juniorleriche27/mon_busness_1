@@ -1001,9 +1001,12 @@ with st.form("lead_form", clear_on_submit=True):
             if uploaded_files:
                 for f in uploaded_files:
                     try:
+                        data = f.getvalue()
+                        if not isinstance(data, (bytes, bytearray)):
+                            data = f.read()
                         file_id = fs.put(
-                            f.getvalue(),
-                            filename=f.name,
+                            data,
+                            filename=str(f.name),
                             content_type=f.type,
                             metadata={
                                 "uploaded_at": datetime.now(timezone.utc),
@@ -1018,8 +1021,8 @@ with st.form("lead_form", clear_on_submit=True):
                                 "size": f.size,
                             }
                         )
-                    except Exception:
-                        st.error(f"Echec upload fichier: {f.name}")
+                    except Exception as exc:
+                        st.error(f"Echec upload fichier {f.name}: {exc}")
 
             doc = {
                 "full_name": full_name.strip(),
