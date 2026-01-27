@@ -998,6 +998,7 @@ with st.form("lead_form", clear_on_submit=True):
         else:
             st.session_state["form_errors"] = []
             stored_files = []
+            upload_failed = False
             if uploaded_files:
                 for f in uploaded_files:
                     try:
@@ -1021,8 +1022,9 @@ with st.form("lead_form", clear_on_submit=True):
                                 "size": f.size,
                             }
                         )
-                    except Exception as exc:
-                        st.error(f"Echec upload fichier {f.name}: {exc}")
+                    except Exception:
+                        upload_failed = True
+                        st.error("Echec de l'upload. Reessayez plus tard.")
 
             doc = {
                 "full_name": full_name.strip(),
@@ -1051,7 +1053,12 @@ with st.form("lead_form", clear_on_submit=True):
                 "created_at": datetime.now(timezone.utc),
             }
 
-            res = leads.insert_one(doc)
+            try:
+                res = leads.insert_one(doc)
+            except Exception:
+                st.error("Le service est temporairement indisponible. Merci de reessayer plus tard.")
+                return
+
             st.success(f"Demande envoyee. Reference: {res.inserted_id}")
             st.info("Brief recu. Je vous contacte sous 24-48h.")
 
