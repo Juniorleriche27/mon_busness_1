@@ -1000,23 +1000,26 @@ with st.form("lead_form", clear_on_submit=True):
             stored_files = []
             if uploaded_files:
                 for f in uploaded_files:
-                    file_id = fs.put(
-                        f.getbuffer(),
-                        filename=f.name,
-                        content_type=f.type,
-                        metadata={
-                            "uploaded_at": datetime.now(timezone.utc),
-                            "lead_email": email.strip(),
-                        },
-                    )
-                    stored_files.append(
-                        {
-                            "file_id": str(file_id),
-                            "name": f.name,
-                            "type": f.type,
-                            "size": f.size,
-                        }
-                    )
+                    try:
+                        file_id = fs.put(
+                            f.getvalue(),
+                            filename=f.name,
+                            content_type=f.type,
+                            metadata={
+                                "uploaded_at": datetime.now(timezone.utc),
+                                "lead_email": email.strip(),
+                            },
+                        )
+                        stored_files.append(
+                            {
+                                "file_id": str(file_id),
+                                "name": f.name,
+                                "type": f.type,
+                                "size": f.size,
+                            }
+                        )
+                    except Exception:
+                        st.error(f"Echec upload fichier: {f.name}")
 
             doc = {
                 "full_name": full_name.strip(),
