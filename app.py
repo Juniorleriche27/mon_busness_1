@@ -451,6 +451,8 @@ fs = gridfs.GridFS(db)
 
 page = st.query_params.get("page") or "home"
 mode = _init_mode()
+if page == "home" and mode in ("A", "B"):
+    page = "service"
 
 # Mets ton URL portfolio ici
 PORTFOLIO_URL = "https://lamadokouyayra.vercel.app/"
