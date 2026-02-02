@@ -280,6 +280,21 @@ db = client[db_name]
 leads = db[col_name]
 fs = gridfs.GridFS(db)
 
+mode = _init_mode()
+mode_choice = st.radio(
+    "Choisissez votre profil",
+    ["Particulier (A)", "Entreprise (B)"],
+    horizontal=True,
+    index=0 if st.session_state["mode"] == "A" else 1,
+)
+new_mode = "A" if mode_choice.startswith("Particulier") else "B"
+if new_mode != st.session_state["mode"]:
+    st.session_state["mode"] = new_mode
+    st.query_params["mode"] = new_mode
+    st.rerun()
+
+mode = st.session_state["mode"]
+
 # Mets ton URL portfolio ici
 PORTFOLIO_URL = "https://lamadokouyayra.vercel.app/"
 WHATSAPP_URL = "https://wa.me/22892092572"
@@ -317,6 +332,7 @@ def _build_ai_payload(doc):
         "metadata": {
             "created_at": doc.get("created_at").isoformat() if doc.get("created_at") else None,
             "source": doc.get("source"),
+            "mode": doc.get("lead_mode"),
         },
     }
 
@@ -370,7 +386,9 @@ def _normalize_list(value):
 
 
 FX_RATE_CFA_PER_USD = 600
-PRICE_PORTFOLIO_CFA = 29900
+PRICE_A = 29900  # Particulier / Candidat
+PRICE_B = 59900  # Entreprise / Vitrine
+MODE_LABELS = {"A": "Particulier (candidat)", "B": "Entreprise (vitrine)"}
 HOSTING_MONTH_CFA = 2000
 HOSTING_YEAR_CFA = 24000
 HOSTING_YEAR_DISCOUNT_CFA = 19900
@@ -443,6 +461,22 @@ def _cohere_generate(payload):
     return parsed, model, error
 
 
+def _init_mode():
+    params = st.query_params
+    initial = "A"
+    qp = params.get("mode")
+    if qp:
+        qp = str(qp).upper()
+        if qp in ("A", "B"):
+            initial = qp
+    if "mode" not in st.session_state:
+        st.session_state["mode"] = initial
+    else:
+        # keep existing unless query forces change
+        if qp in ("A", "B") and st.session_state["mode"] != qp:
+            st.session_state["mode"] = qp
+    return st.session_state["mode"]
+
 ADMIN_MODE = bool(st.secrets.get("admin", {}).get("enabled", False))
 
 
@@ -498,6 +532,9 @@ def _render_chat_html(messages, typing_text=""):
 
 
 def _render_sales_sidebar():
+    mode = st.session_state.get("mode", "A")
+    main_price = PRICE_A if mode == "A" else PRICE_B
+    product_label = "Portfolio candidat" if mode == "A" else "Vitrine entreprise"
     st.sidebar.markdown(
         """
         <div class="sidebar-card">
@@ -510,7 +547,7 @@ def _render_sales_sidebar():
     st.sidebar.markdown(
         f"""
         <div class="sidebar-section">
-          <strong>Portfolio</strong><br />{_format_price(PRICE_PORTFOLIO_CFA)}
+          <strong>{product_label}</strong><br />{_format_price(main_price)}
         </div>
         <div class="sidebar-section">
           <strong>Hebergement</strong><br />{_format_price(HOSTING_MONTH_CFA)} / mois
@@ -520,6 +557,11 @@ def _render_sales_sidebar():
         </div>
         <div class="sidebar-section">
           <strong>Offre annuelle</strong><br />{_format_price(HOSTING_YEAR_DISCOUNT_CFA)}
+        </div>
+        <div class="sidebar-section">
+          <strong>Exemples</strong><br />
+          <a href="https://www.pieagency.fr/" target="_blank">pieagency.fr</a><br />
+          <a href="https://innovaplus.africa/" target="_blank">innovaplus.africa</a>
         </div>
         """,
         unsafe_allow_html=True,
@@ -586,6 +628,7 @@ def _send_lead_email(doc, lead_id):
         f"Nom: {doc.get('full_name')}\n"
         f"Email: {doc.get('email')}\n"
         f"WhatsApp: {doc.get('phone_whatsapp')}\n"
+        f"Mode: {doc.get('lead_mode')}\n"
         f"Objectif: {doc.get('objective')}\n"
         f"Role vise: {doc.get('target_role')}\n"
         f"Delai: {doc.get('deadline')}\n"
@@ -637,6 +680,25 @@ if photo_path:
 else:
     photo_html = '<div class="photo-placeholder">Photo en attente — ajoute une image dans `assets/`</div>'
 
+HERO_COPY = {
+    "A": {
+        "title": "Je crée votre portfolio candidat, clair et crédible",
+        "subtitle": "Projets + preuves + compétences, pour déclencher des entretiens",
+        "cta_primary": "Demander mon portfolio",
+        "cta_secondary": "Voir un exemple",
+        "cta_secondary_url": "https://www.pieagency.fr/",
+    },
+    "B": {
+        "title": "Je crée votre page vitrine entreprise, prête à convertir",
+        "subtitle": "Services + crédibilité + contact WhatsApp, pour générer des demandes",
+        "cta_primary": "Demander ma vitrine",
+        "cta_secondary": "Voir un exemple",
+        "cta_secondary_url": "https://innovaplus.africa/",
+    },
+}
+
+hero_cfg = HERO_COPY[mode]
+
 st.markdown(
     f"""
     <div class="hero">
@@ -644,10 +706,9 @@ st.markdown(
         <div class="hero-media">{photo_html}</div>
         <div class="hero-content">
           <div class="hero-kicker">Service portfolio</div>
-          <div class="hero-title">Je crée votre portfolio professionnel sur-mesure</div>
+          <div class="hero-title">{hero_cfg['title']}</div>
           <div class="hero-sub">
-            Pour décrocher un emploi, attirer des clients et crédibiliser votre profil —
-            version prête en quelques jours.
+            {hero_cfg['subtitle']}
           </div>
           <div class="badges">
             <span>✅ Design moderne</span>
@@ -656,8 +717,8 @@ st.markdown(
             <span>✅ Brief structuré</span>
           </div>
           <div class="hero-actions">
-            <a class="primary" href="{WHATSAPP_URL}" target="_blank" rel="noopener">Demander un devis</a>
-            <a class="ghost" href="{PORTFOLIO_URL}" target="_blank" rel="noopener">Voir mon portfolio</a>
+            <a class="primary" href="{WHATSAPP_URL}" target="_blank" rel="noopener">{hero_cfg['cta_primary']}</a>
+            <a class="ghost" href="{hero_cfg['cta_secondary_url']}" target="_blank" rel="noopener">{hero_cfg['cta_secondary']}</a>
           </div>
         </div>
       </div>
@@ -717,19 +778,49 @@ st.write("")
 # -------------------------
 # Benefits / How it works
 # -------------------------
+CONTENT_OBTIENS = {
+    "A": [
+        "Portfolio orienté recruteur",
+        "Projets présentés proprement (preuves)",
+        "Compétences + outils",
+        "Contact rapide (WhatsApp/email)",
+        "Mobile-first",
+    ],
+    "B": [
+        "Page vitrine (services + preuve)",
+        "CTA WhatsApp + appel",
+        "Horaires + localisation (si besoin)",
+        "Message clair + crédibilité",
+        "Mobile-first",
+    ],
+}
+
+CONTENT_HOW = {
+    "A": [
+        "Tu envoies CV + 2–3 projets",
+        "Je structure l’angle + le message",
+        "Je construis le portfolio",
+        "Ajustements + livraison",
+    ],
+    "B": [
+        "Tu envoies infos entreprise + services + visuels",
+        "Je structure la page (offre + CTA)",
+        "Je construis la vitrine",
+        "Ajustements + livraison",
+    ],
+}
+
+def _render_list(items):
+    return "<ul>" + "".join(f"<li>{x}</li>" for x in items) + "</ul>"
+
 s1, s2 = st.columns(2, gap="large")
 
 with s1:
     st.markdown(
-        """
+        f"""
         <div class="section">
           <h3>Ce que tu obtiens</h3>
-          <ul>
-            <li>Un portfolio premium, clair et professionnel.</li>
-            <li>Un message positionné pour recruteurs et clients internationaux.</li>
-            <li>Une structure orientée conversion (preuves, projets, contact).</li>
-            <li>Une présence en ligne qui inspire confiance en quelques secondes.</li>
-          </ul>
+          {_render_list(CONTENT_OBTIENS[mode])}
           <div class="small-muted">
             Objectif : déclencher un contact qualifié, pas juste une visite.
           </div>
@@ -740,15 +831,10 @@ with s1:
 
 with s2:
     st.markdown(
-        """
+        f"""
         <div class="section">
           <h3>Comment ça se passe</h3>
-          <ol>
-            <li>Tu envoies un brief détaillé.</li>
-            <li>Je valide la cible, l’objectif et le positionnement.</li>
-            <li>Je conçois la structure et les textes.</li>
-            <li>Livraison rapide + ajustements.</li>
-          </ol>
+          {_render_list(CONTENT_HOW[mode]).replace("<ul>", "<ol>").replace("</ul>", "</ol>")}
         </div>
         """,
         unsafe_allow_html=True,
@@ -1029,10 +1115,11 @@ with st.form("lead_form", clear_on_submit=True):
             doc = {
                 "full_name": full_name.strip(),
                 "phone_whatsapp": phone.strip(),
-                "email": email.strip(),
-                "country": country.strip() if country else None,
-                "city": city.strip() if city else None,
-                "objective": objective,
+            "email": email.strip(),
+            "lead_mode": mode,
+            "country": country.strip() if country else None,
+            "city": city.strip() if city else None,
+            "objective": objective,
                 "target_role": role.strip(),
                 "deadline": deadline,
                 "language": language,
