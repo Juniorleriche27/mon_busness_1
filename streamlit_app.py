@@ -267,38 +267,6 @@ div[data-testid="stForm"] {
 st.markdown(CSS, unsafe_allow_html=True)
 
 
-# -------------------------
-# Mongo (secrets.toml)
-# -------------------------
-mongo = st.secrets["mongodb"]
-uri = mongo["uri"]
-db_name = mongo.get("db", "portfolio")
-col_name = mongo.get("collection", "leads")
-
-client = MongoClient(uri, server_api=ServerApi("1"))
-db = client[db_name]
-leads = db[col_name]
-fs = gridfs.GridFS(db)
-
-mode = _init_mode()
-mode_choice = st.radio(
-    "Choisissez votre profil",
-    ["Particulier (A)", "Entreprise (B)"],
-    horizontal=True,
-    index=0 if st.session_state["mode"] == "A" else 1,
-)
-new_mode = "A" if mode_choice.startswith("Particulier") else "B"
-if new_mode != st.session_state["mode"]:
-    st.session_state["mode"] = new_mode
-    st.query_params["mode"] = new_mode
-    st.rerun()
-
-mode = st.session_state["mode"]
-
-# Mets ton URL portfolio ici
-PORTFOLIO_URL = "https://lamadokouyayra.vercel.app/"
-WHATSAPP_URL = "https://wa.me/22892092572"
-
 
 def _build_ai_payload(doc):
     return {
@@ -477,6 +445,38 @@ def _init_mode():
             st.session_state["mode"] = qp
     return st.session_state["mode"]
 
+
+"""
+# Mongo (secrets.toml)
+"""
+mongo = st.secrets["mongodb"]
+uri = mongo["uri"]
+db_name = mongo.get("db", "portfolio")
+col_name = mongo.get("collection", "leads")
+
+client = MongoClient(uri, server_api=ServerApi("1"))
+db = client[db_name]
+leads = db[col_name]
+fs = gridfs.GridFS(db)
+
+mode = _init_mode()
+mode_choice = st.radio(
+    "Choisissez votre profil",
+    ["Particulier (A)", "Entreprise (B)"],
+    horizontal=True,
+    index=0 if st.session_state["mode"] == "A" else 1,
+)
+new_mode = "A" if mode_choice.startswith("Particulier") else "B"
+if new_mode != st.session_state["mode"]:
+    st.session_state["mode"] = new_mode
+    st.query_params["mode"] = new_mode
+    st.rerun()
+
+mode = st.session_state["mode"]
+
+# Mets ton URL portfolio ici
+PORTFOLIO_URL = "https://lamadokouyayra.vercel.app/"
+WHATSAPP_URL = "https://wa.me/22892092572"
 ADMIN_MODE = bool(st.secrets.get("admin", {}).get("enabled", False))
 
 
