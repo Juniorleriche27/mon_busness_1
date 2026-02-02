@@ -446,9 +446,6 @@ def _init_mode():
     return st.session_state["mode"]
 
 
-"""
-# Mongo (secrets.toml)
-"""
 mongo = st.secrets["mongodb"]
 uri = mongo["uri"]
 db_name = mongo.get("db", "portfolio")
