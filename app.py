@@ -892,10 +892,9 @@ if page == "service":
 st.write("")
 
 
-if page == "service":
-    # -------------------------
-    # Formulaire (brief complet)
-    # -------------------------
+# -------------------------
+# Formulaire (brief complet)
+# -------------------------
 def _get_index(options, value):
     try:
         return options.index(value)
