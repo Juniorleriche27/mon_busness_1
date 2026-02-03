@@ -20,8 +20,8 @@ from email.message import EmailMessage
 # Config page (site-like)
 # -------------------------
 st.set_page_config(
-    page_title="Portfolio — Demande de devis",
-    page_icon="🧩",
+    page_title="Portfolio - Demande de devis",
+    page_icon="P",
     layout="wide",
 )
 
@@ -429,13 +429,16 @@ def _cohere_generate(payload):
     return parsed, model, error
 
 
-def _init_mode():
+def _init_mode(page):
     params = st.query_params
     qp = params.get("mode")
-    if qp:
+    if page == "service" and qp:
         qp = str(qp).upper()
         if qp in ("A", "B"):
             st.session_state["mode"] = qp
+    if page != "service":
+        st.session_state.pop("mode", None)
+        return None
     return st.session_state.get("mode")
 
 
@@ -450,9 +453,8 @@ leads = db[col_name]
 fs = gridfs.GridFS(db)
 
 page = st.query_params.get("page") or "home"
-mode = _init_mode()
-if page == "home" and mode in ("A", "B"):
-    page = "service"
+page = str(page).lower()
+mode = _init_mode(page)
 
 # Mets ton URL portfolio ici
 PORTFOLIO_URL = "https://lamadokouyayra.vercel.app/"
@@ -467,8 +469,7 @@ def _render_home():
             <div class="section">
               <h3>Portfolio candidat</h3>
               <div>Pour postuler (emploi, stage, alternance) avec des preuves.</div>
-              <br/>
-              <button class="css-1q8dd3e edgvbvh10">Continuer (A)</button>
+              <div class="small-muted" style="margin-top:8px;">CV + projets + preuves.</div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -482,9 +483,8 @@ def _render_home():
             """
             <div class="section">
               <h3>Vitrine entreprise</h3>
-              <div>Pour présenter vos offres et générer des demandes.</div>
-              <br/>
-              <button class="css-1q8dd3e edgvbvh10">Continuer (B)</button>
+              <div>Pour presenter vos offres et generer des demandes.</div>
+              <div class="small-muted" style="margin-top:8px;">Services + preuves + CTA.</div>
             </div>
             """,
             unsafe_allow_html=True,
