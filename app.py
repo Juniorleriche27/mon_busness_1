@@ -691,25 +691,46 @@ def _send_lead_email(doc, lead_id):
         return False, "smtp_config_missing"
 
     msg = EmailMessage()
-    msg["Subject"] = f"Nouveau brief portfolio: {doc.get('full_name', 'Sans nom')}"
+    lead_mode = doc.get("lead_mode")
+    subject_name = doc.get("full_name") or doc.get("company_name") or "Sans nom"
+    msg["Subject"] = f"Nouveau brief portfolio: {subject_name}"
     msg["From"] = sender
     msg["To"] = to_email
 
-    body = (
-        f"Reference: {lead_id}\n"
-        f"Nom: {doc.get('full_name')}\n"
-        f"Email: {doc.get('email')}\n"
-        f"WhatsApp: {doc.get('phone_whatsapp')}\n"
-        f"Mode: {doc.get('lead_mode')}\n"
-        f"Objectif: {doc.get('objective')}\n"
-        f"Role vise: {doc.get('target_role')}\n"
-        f"Delai: {doc.get('deadline')}\n"
-        f"Langue: {doc.get('language')}\n"
-        f"Pays/Ville: {doc.get('country')} / {doc.get('city')}\n"
-        f"Site/LinkedIn: {doc.get('website')}\n"
-        f"Projets: {doc.get('projects')}\n"
-        f"Besoin:\n{doc.get('need')}\n"
-    )
+    if lead_mode == "B":
+        body = (
+            f"Reference: {lead_id}\n"
+            f"Entreprise: {doc.get('company_name')}\n"
+            f"Secteur: {doc.get('sector')}\n"
+            f"Email: {doc.get('email')}\n"
+            f"WhatsApp: {doc.get('phone_whatsapp')}\n"
+            f"Mode: {doc.get('lead_mode')}\n"
+            f"Services/Produits: {doc.get('services_products')}\n"
+            f"Zone de service: {doc.get('service_area')}\n"
+            f"Horaires: {doc.get('hours')}\n"
+            f"Prix/Forfaits: {doc.get('pricing')}\n"
+            f"References: {doc.get('references')}\n"
+            f"Reseaux sociaux: {doc.get('social_links')}\n"
+            f"Couleurs: {doc.get('brand_colors')}\n"
+            f"Delai: {doc.get('deadline')}\n"
+            f"Pays/Ville: {doc.get('country')} / {doc.get('city')}\n"
+        )
+    else:
+        body = (
+            f"Reference: {lead_id}\n"
+            f"Nom: {doc.get('full_name')}\n"
+            f"Email: {doc.get('email')}\n"
+            f"WhatsApp: {doc.get('phone_whatsapp')}\n"
+            f"Mode: {doc.get('lead_mode')}\n"
+            f"Objectif: {doc.get('objective')}\n"
+            f"Role vise: {doc.get('target_role')}\n"
+            f"Delai: {doc.get('deadline')}\n"
+            f"Langue: {doc.get('language')}\n"
+            f"Pays/Ville: {doc.get('country')} / {doc.get('city')}\n"
+            f"Site/LinkedIn: {doc.get('website')}\n"
+            f"Projets: {doc.get('projects')}\n"
+            f"Besoin:\n{doc.get('need')}\n"
+        )
     msg.set_content(body)
 
     try:
@@ -950,7 +971,7 @@ def _get_index(options, value):
         return 0
 
 
-FORM_KEYS = [
+FORM_A_KEYS = [
     "full_name",
     "phone",
     "email",
@@ -973,24 +994,56 @@ FORM_KEYS = [
     "consent",
 ]
 
-for key in FORM_KEYS:
+FORM_B_KEYS = [
+    "company_name",
+    "sector",
+    "country_b",
+    "city_b",
+    "email_b",
+    "phone_b",
+    "services_products",
+    "service_area",
+    "hours",
+    "pricing",
+    "references",
+    "social_links",
+    "brand_colors",
+    "deadline_b",
+    "hosting_plan_b",
+    "consent_b",
+]
+
+for key in FORM_A_KEYS + FORM_B_KEYS:
     st.session_state.setdefault(key, "")
 
-form_errors = set(st.session_state.get("form_errors", []))
+form_errors_a = set(st.session_state.get("form_errors_a", []))
+form_errors_b = set(st.session_state.get("form_errors_b", []))
 
-ERROR_FIELD_SELECTORS = {
+ERROR_FIELD_SELECTORS_A = {
     "full_name": 'input[aria-label="Nom complet *"]',
-    "phone": 'input[aria-label="WhatsApp / Téléphone *"]',
+    "phone": 'input[aria-label="WhatsApp / T??l??phone *"]',
     "email": 'input[aria-label="Email *"]',
-    "role": 'input[aria-label="Poste / rôle visé *"]',
-    "need": 'textarea[aria-label="Contexte et objectifs (secteur, niveau d’expérience, message à transmettre) *"]',
+    "role": 'input[aria-label="Poste / r??le vis?? *"]',
+    "need": 'textarea[aria-label="Contexte et objectifs (secteur, niveau d???exp??rience, message ?? transmettre) *"]',
+}
+
+ERROR_FIELD_SELECTORS_B = {
+    "company_name": 'input[aria-label="Nom entreprise *"]',
+    "sector": 'input[aria-label="Activit?? / secteur *"]',
+    "country_b": 'input[aria-label="Pays *"]',
+    "city_b": 'input[aria-label="Ville *"]',
+    "email_b": 'input[aria-label="Email pro *"]',
+    "phone_b": 'input[aria-label="WhatsApp / T??l??phone *"]',
+    "services_products": 'textarea[aria-label="Services / produits (3 ?? 7 items) *"]',
+    "deadline_b": 'select[aria-label="D??lai souhait?? *"]',
+    "consent_b": 'input[aria-label="J???accepte d?????tre recontact?? pour cette demande *"]',
 }
 
 
-def _render_error_css(keys):
+def _render_error_css(keys, mapping):
     rules = []
     for key in keys:
-        selector = ERROR_FIELD_SELECTORS.get(key)
+        selector = mapping.get(key)
         if selector:
             rules.append(
                 f'{selector} {{ border: 2px solid #ef4444 !important; '
@@ -1000,8 +1053,8 @@ def _render_error_css(keys):
         st.markdown(f"<style>{''.join(rules)}</style>", unsafe_allow_html=True)
 
 
-_render_error_css(form_errors)
-
+_render_error_css(form_errors_a, ERROR_FIELD_SELECTORS_A)
+_render_error_css(form_errors_b, ERROR_FIELD_SELECTORS_B)
 OBJECTIVE_OPTIONS = ["emploi", "freelance", "business", "études", "autre"]
 LANGUAGE_OPTIONS = ["Français", "Anglais", "Bilingue", "Autre (préciser)"]
 DEADLINE_OPTIONS = ["24h", "48h", "72h", "1 semaine", "2 semaines"]
@@ -1013,19 +1066,294 @@ MAX_UPLOAD_MB = 10
 def _format_mb(value):
     return f"{value / (1024 * 1024):.1f} MB"
 
+if mode == "B":
+    with st.form("lead_form_b", clear_on_submit=True):
+        st.markdown('<div class="form-title">Brief entreprise</div>', unsafe_allow_html=True)
+        st.markdown('<div class="form-card"><div class="form-card-title">Entreprise</div>', unsafe_allow_html=True)
+        a, b = st.columns(2)
+        with a:
+            company_name = st.text_input("Nom entreprise *", value=st.session_state["company_name"])
+            if "company_name" in form_errors_b:
+                st.error("Champ requis")
+            sector = st.text_input("Activite / secteur *", value=st.session_state["sector"])
+            if "sector" in form_errors_b:
+                st.error("Champ requis")
+            email_b = st.text_input("Email pro *", value=st.session_state["email_b"])
+            if "email_b" in form_errors_b:
+                st.error("Champ requis")
+        with b:
+            country_b = st.text_input("Pays *", value=st.session_state["country_b"])
+            if "country_b" in form_errors_b:
+                st.error("Champ requis")
+            city_b = st.text_input("Ville *", value=st.session_state["city_b"])
+            if "city_b" in form_errors_b:
+                st.error("Champ requis")
+            phone_b = st.text_input("WhatsApp / Telephone *", value=st.session_state["phone_b"])
+            if "phone_b" in form_errors_b:
+                st.error("Champ requis")
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown('<div class="form-card"><div class="form-card-title">Offre</div>', unsafe_allow_html=True)
+        services_products = st.text_area(
+            "Services / produits (3 a 7 items) *",
+            height=120,
+            value=st.session_state["services_products"],
+        )
+        if "services_products" in form_errors_b:
+            st.error("Champ requis")
+        c, d = st.columns(2)
+        with c:
+            service_area = st.text_input("Zone de service", value=st.session_state["service_area"])
+            hours = st.text_input("Horaires", value=st.session_state["hours"])
+        with d:
+            pricing = st.text_input("Prix / forfaits (option)", value=st.session_state["pricing"])
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown('<div class="form-card"><div class="form-card-title">Preuves</div>', unsafe_allow_html=True)
+        references = st.text_area(
+            "Realisations / references (texte ou liens)",
+            height=100,
+            value=st.session_state["references"],
+        )
+        social_links = st.text_input(
+            "Reseaux sociaux (FB/IG/LinkedIn)",
+            value=st.session_state["social_links"],
+        )
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown('<div class="form-card"><div class="form-card-title">Branding</div>', unsafe_allow_html=True)
+        brand_colors = st.text_input("Couleurs", value=st.session_state["brand_colors"])
+        b_logo = st.file_uploader(
+            "Logo (option)",
+            type=["png", "jpg", "jpeg", "pdf"],
+            accept_multiple_files=False,
+            key="b_logo",
+        )
+        b_photos = st.file_uploader(
+            "Photos produits/locaux (option)",
+            type=["png", "jpg", "jpeg", "pdf"],
+            accept_multiple_files=True,
+            key="b_photos",
+        )
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown('<div class="form-card"><div class="form-card-title">Livraison</div>', unsafe_allow_html=True)
+        e, f = st.columns(2)
+        with e:
+            deadline_b = st.selectbox(
+                "Delai souhaite *",
+                DEADLINE_OPTIONS,
+                index=_get_index(DEADLINE_OPTIONS, st.session_state["deadline_b"] or DEADLINE_OPTIONS[0]),
+            )
+            if "deadline_b" in form_errors_b:
+                st.error("Champ requis")
+        with f:
+            hosting_plan_b = st.selectbox(
+                "Hebergement",
+                ["aucun", "mensuel", "annuel"],
+                index=_get_index(["aucun", "mensuel", "annuel"], st.session_state["hosting_plan_b"] or "aucun"),
+            )
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown('<div class="form-card"><div class="form-card-title">Consentement</div>', unsafe_allow_html=True)
+        consent_b = st.checkbox(
+            "J'accepte d'etre recontacte pour cette demande *",
+            value=bool(st.session_state["consent_b"]),
+        )
+        if "consent_b" in form_errors_b:
+            st.error("Champ requis")
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        submit_b = st.form_submit_button("Envoyer ma demande (entreprise)")
+
+        if submit_b:
+            missing_keys = []
+            if not company_name.strip():
+                missing_keys.append("company_name")
+            if not sector.strip():
+                missing_keys.append("sector")
+            if not country_b.strip():
+                missing_keys.append("country_b")
+            if not city_b.strip():
+                missing_keys.append("city_b")
+            if not email_b.strip():
+                missing_keys.append("email_b")
+            if not phone_b.strip():
+                missing_keys.append("phone_b")
+            if not services_products.strip():
+                missing_keys.append("services_products")
+            if not deadline_b:
+                missing_keys.append("deadline_b")
+            if not consent_b:
+                missing_keys.append("consent_b")
+
+            def _split_items(text):
+                import re
+                return [i.strip() for i in re.split(r"[\\n,;]+", text or "") if i.strip()]
+
+            services_list = _split_items(services_products)
+            if services_products and (len(services_list) < 3 or len(services_list) > 7):
+                st.error("Merci d'indiquer entre 3 et 7 services/produits.")
+                missing_keys.append("services_products")
+
+            file_errors = []
+            for f in [b_logo] + (b_photos or []):
+                if f and f.size > MAX_UPLOAD_MB * 1024 * 1024:
+                    file_errors.append(
+                        f"{f.name} depasse {MAX_UPLOAD_MB} MB (taille: {_format_mb(f.size)})"
+                    )
+
+            st.session_state.update(
+                {
+                    "company_name": company_name,
+                    "sector": sector,
+                    "country_b": country_b,
+                    "city_b": city_b,
+                    "email_b": email_b,
+                    "phone_b": phone_b,
+                    "services_products": services_products,
+                    "service_area": service_area,
+                    "hours": hours,
+                    "pricing": pricing,
+                    "references": references,
+                    "social_links": social_links,
+                    "brand_colors": brand_colors,
+                    "deadline_b": deadline_b,
+                    "hosting_plan_b": hosting_plan_b,
+                    "consent_b": consent_b,
+                }
+            )
+
+            if missing_keys or file_errors:
+                st.session_state["form_errors_b"] = missing_keys
+                _render_error_css(missing_keys, ERROR_FIELD_SELECTORS_B)
+                if missing_keys:
+                    st.error("Merci de completer les champs requis en rouge.")
+                if file_errors:
+                    st.error("Fichiers trop volumineux : " + ", ".join(file_errors))
+            else:
+                st.session_state["form_errors_b"] = []
+                stored_files = []
+                for f, group in [(b_logo, "logo")] + [(x, "photos") for x in (b_photos or [])]:
+                    if not f:
+                        continue
+                    try:
+                        data = f.getvalue()
+                        if not isinstance(data, (bytes, bytearray)):
+                            data = f.read()
+                        file_id = fs.put(
+                            data,
+                            filename=str(f.name),
+                            content_type=f.type,
+                            metadata={
+                                "uploaded_at": datetime.now(timezone.utc),
+                                "lead_email": email_b.strip(),
+                                "group": group,
+                            },
+                        )
+                        stored_files.append(
+                            {
+                                "file_id": str(file_id),
+                                "name": f.name,
+                                "type": f.type,
+                                "size": f.size,
+                                "group": group,
+                            }
+                        )
+                    except Exception:
+                        st.error("Echec de l'upload. Reessayez plus tard.")
+
+                doc = {
+                    "company_name": company_name.strip(),
+                    "sector": sector.strip(),
+                    "country": country_b.strip(),
+                    "city": city_b.strip(),
+                    "email": email_b.strip(),
+                    "phone_whatsapp": phone_b.strip(),
+                    "lead_mode": "B",
+                    "services_products": services_list,
+                    "service_area": service_area.strip() if service_area else None,
+                    "hours": hours.strip() if hours else None,
+                    "pricing": pricing.strip() if pricing else None,
+                    "references": references.strip() if references else None,
+                    "social_links": social_links.strip() if social_links else None,
+                    "brand_colors": brand_colors.strip() if brand_colors else None,
+                    "deadline": deadline_b,
+                    "hosting_plan": hosting_plan_b,
+                    "uploaded_files": stored_files,
+                    "consent_contact": True,
+                    "lead_status": "new",
+                    "source": "streamlit_site",
+                    "created_at": datetime.now(timezone.utc),
+                }
+
+                res = None
+                db_ok = False
+                try:
+                    res = leads.insert_one(doc)
+                    db_ok = True
+                except Exception:
+                    db_ok = False
+
+                ref_id = str(res.inserted_id) if res else "email-only"
+                email_ok, email_error = _send_lead_email(doc, ref_id)
+
+                if db_ok:
+                    st.success(f"Demande entreprise recue. Reference: {res.inserted_id}")
+                    st.info("Demande entreprise recue. Reponse rapide apres analyse des elements.")
+                else:
+                    if email_ok:
+                        st.success("Demande entreprise recue.")
+                        st.info("Base temporairement indisponible. Votre demande a ete envoyee par email.")
+                    else:
+                        st.error("Le service est temporairement indisponible. Merci de reessayer plus tard.")
+                        st.stop()
+
+                if not email_ok:
+                    if db_ok:
+                        leads.update_one(
+                            {"_id": res.inserted_id},
+                            {"$set": {"email_status": "failed", "email_error": email_error}},
+                        )
+                else:
+                    if db_ok:
+                        leads.update_one(
+                            {"_id": res.inserted_id},
+                            {"$set": {"email_status": "sent"}},
+                        )
+
+                if not db_ok:
+                    st.stop()
+
+                if stored_files:
+                    st.info(
+                        "Fichiers recus: "
+                        + ", ".join(f"{f['name']} ({_format_mb(f.get('size', 0))})" for f in stored_files)
+                    )
+
+                st.session_state["last_lead_id"] = str(res.inserted_id) if res else ""
+                for key in FORM_B_KEYS:
+                    st.session_state[key] = ""
+                if "b_logo" in st.session_state:
+                    st.session_state.pop("b_logo")
+                if "b_photos" in st.session_state:
+                    st.session_state.pop("b_photos")
+
+    st.stop()
+
 with st.form("lead_form", clear_on_submit=True):
     st.markdown('<div class="form-title">Vos informations pour commencer</div>', unsafe_allow_html=True)
     st.markdown('<div class="form-card"><div class="form-card-title">Identite et contact</div>', unsafe_allow_html=True)
     a, b = st.columns(2)
     with a:
         full_name = st.text_input("Nom complet *", value=st.session_state["full_name"])
-        if "full_name" in form_errors:
+        if "full_name" in form_errors_a:
             st.error("Champ requis")
         phone = st.text_input("WhatsApp / Téléphone *", value=st.session_state["phone"])
-        if "phone" in form_errors:
+        if "phone" in form_errors_a:
             st.error("Champ requis")
         email = st.text_input("Email *", value=st.session_state["email"])
-        if "email" in form_errors:
+        if "email" in form_errors_a:
             st.error("Champ requis")
     with b:
         country = st.text_input("Pays", value=st.session_state["country"])
@@ -1041,7 +1369,7 @@ with st.form("lead_form", clear_on_submit=True):
             index=_get_index(OBJECTIVE_OPTIONS, st.session_state["objective"] or OBJECTIVE_OPTIONS[0]),
         )
         role = st.text_input("Poste / rôle visé *", value=st.session_state["role"])
-        if "role" in form_errors:
+        if "role" in form_errors_a:
             st.error("Champ requis")
         deadline = st.selectbox(
             "Délai souhaité *",
@@ -1093,7 +1421,7 @@ with st.form("lead_form", clear_on_submit=True):
         height=140,
         value=st.session_state["need"],
     )
-    if "need" in form_errors:
+    if "need" in form_errors_a:
         st.error("Champ requis")
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -1117,7 +1445,7 @@ with st.form("lead_form", clear_on_submit=True):
         "J’accepte d’être recontacté pour cette demande *",
         value=bool(st.session_state["consent"]),
     )
-    if "consent" in form_errors:
+    if "consent" in form_errors_a:
         st.error("Champ requis")
     st.markdown("</div>", unsafe_allow_html=True)
     submit = st.form_submit_button("Envoyer")
@@ -1172,14 +1500,14 @@ with st.form("lead_form", clear_on_submit=True):
         )
 
         if missing_keys or file_errors:
-            st.session_state["form_errors"] = missing_keys
-            _render_error_css(missing_keys)
+            st.session_state["form_errors_a"] = missing_keys
+            _render_error_css(missing_keys, ERROR_FIELD_SELECTORS_A)
             if missing_keys:
                 st.error("Merci de completer les champs requis en rouge.")
             if file_errors:
                 st.error("Fichiers trop volumineux : " + ", ".join(file_errors))
         else:
-            st.session_state["form_errors"] = []
+            st.session_state["form_errors_a"] = []
             stored_files = []
             upload_failed = False
             if uploaded_files:
