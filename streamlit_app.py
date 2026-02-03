@@ -155,12 +155,13 @@ h1, h2, h3 { letter-spacing: -0.02em; }
 
 /* Photo placeholder */
 .photo-placeholder {
-  padding: 16px;
-  border: 1px dashed rgba(0,0,0,0.20);
-  border-radius: 14px;
-  text-align: center;
-  color: #6b7280;
-  background: rgba(0,0,0,0.02);
+    padding: 16px;
+    border: 1px dashed rgba(0,0,0,0.20);
+    border-radius: 14px;
+    text-align: center;
+    color: #6b7280;
+    min-height: 220px;
+    background: linear-gradient(135deg, rgba(15,118,110,0.08), rgba(15,118,110,0.02));
 }
 
 /* Form */
@@ -706,7 +707,7 @@ if page == "service":
     photo_html = ""
     if mode == "B":
         # mockup placeholder for entreprise
-        photo_html = '<div class="photo-placeholder">Mockup vitrine — ajoute `assets/mockup.jpg`</div>'
+        photo_html = '<div class="photo-placeholder"></div>'
         mock_candidates = ["mockup.jpg", "mockup.png", "vitrine.jpg"]
         for name in mock_candidates:
             candidate = os.path.join(asset_dir, name)
