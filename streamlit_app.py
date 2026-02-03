@@ -163,6 +163,43 @@ h1, h2, h3 { letter-spacing: -0.02em; }
     min-height: 220px;
     background: linear-gradient(135deg, rgba(15,118,110,0.08), rgba(15,118,110,0.02));
 }
+.mockup {
+  border: 1px solid rgba(15,118,110,0.18);
+  border-radius: 16px;
+  background: #ffffff;
+  padding: 14px;
+  box-shadow: 0 12px 24px rgba(15,118,110,0.10);
+}
+.mockup-topbar {
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(15,118,110,0.15), rgba(15,118,110,0.05));
+  margin-bottom: 10px;
+}
+.mockup-hero {
+  height: 80px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(15,118,110,0.18), rgba(59,130,246,0.10));
+  margin-bottom: 10px;
+}
+.mockup-row {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 10px;
+}
+.mockup-card {
+  height: 58px;
+  border-radius: 10px;
+  background: rgba(15,118,110,0.06);
+  border: 1px solid rgba(15,118,110,0.12);
+}
+.mockup-pill {
+  height: 10px;
+  width: 70%;
+  border-radius: 999px;
+  background: rgba(15,118,110,0.20);
+  margin: 10px auto 0;
+}
 
 /* Form */
 div[data-testid="stForm"] {
@@ -707,7 +744,17 @@ if page == "service":
     photo_html = ""
     if mode == "B":
         # mockup placeholder for entreprise
-        photo_html = '<div class="photo-placeholder"></div>'
+        photo_html = (
+            '<div class="mockup">'
+            '<div class="mockup-topbar"></div>'
+            '<div class="mockup-hero"></div>'
+            '<div class="mockup-row">'
+            '<div class="mockup-card"></div>'
+            '<div class="mockup-card"></div>'
+            '</div>'
+            '<div class="mockup-pill"></div>'
+            '</div>'
+        )
         mock_candidates = ["mockup.jpg", "mockup.png", "vitrine.jpg"]
         for name in mock_candidates:
             candidate = os.path.join(asset_dir, name)
