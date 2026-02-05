@@ -4,7 +4,6 @@ import json
 import re
 import time
 from datetime import datetime, timezone
-
 import streamlit as st
 import cohere
 import gridfs
@@ -14,8 +13,6 @@ from pymongo.server_api import ServerApi
 import smtplib
 import html
 from email.message import EmailMessage
-
-
 # -------------------------
 # Config page (site-like)
 # -------------------------
@@ -24,7 +21,6 @@ st.set_page_config(
     page_icon="P",
     layout="wide",
 )
-
 CSS = """
 <style>
 /* Global */
@@ -46,7 +42,6 @@ body {
 }
 h1, h2, h3 { letter-spacing: -0.02em; }
 .small-muted { color: #6b7280; font-size: 0.95rem; }
-
 /* Hero */
 .hero {
   padding: 22px 24px;
@@ -121,7 +116,6 @@ h1, h2, h3 { letter-spacing: -0.02em; }
   background: #ffffff;
   color: #0f172a;
 }
-
 /* Sections */
 .section {
   padding: 18px 20px;
@@ -147,12 +141,10 @@ h1, h2, h3 { letter-spacing: -0.02em; }
   color: #111827;
   background: #f9fafb;
 }
-
 @media (max-width: 900px) {
   .hero-grid { grid-template-columns: 1fr; }
   .cta-buttons { grid-template-columns: 1fr; }
 }
-
 /* Photo placeholder */
 .photo-placeholder {
     padding: 16px;
@@ -200,7 +192,6 @@ h1, h2, h3 { letter-spacing: -0.02em; }
   background: rgba(15,118,110,0.20);
   margin: 10px auto 0;
 }
-
 /* Form */
 div[data-testid="stForm"] {
   padding: 18px 20px;
@@ -229,7 +220,6 @@ div[data-testid="stForm"] {
   color: #0f172a;
   margin: 8px 0 16px;
 }
-
 /* Sidebar */
 .sidebar-card {
   background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
@@ -303,9 +293,6 @@ div[data-testid="stForm"] {
 </style>
 """
 st.markdown(CSS, unsafe_allow_html=True)
-
-
-
 def _build_ai_payload(doc):
     return {
         "identity": {
@@ -341,8 +328,6 @@ def _build_ai_payload(doc):
             "mode": doc.get("lead_mode"),
         },
     }
-
-
 def _local_quality_score(doc):
     score = 0
     link_ok = bool(doc.get("website") or doc.get("competitor_examples"))
@@ -358,8 +343,6 @@ def _local_quality_score(doc):
     if contact_ok:
         score += 25
     return score
-
-
 def _extract_json(text):
     try:
         return json.loads(text), None
@@ -371,8 +354,6 @@ def _extract_json(text):
             return json.loads(match.group(0)), None
         except Exception as inner_exc:
             return None, f"json_parse_failed: {inner_exc}"
-
-
 def _extract_score(ai_data, fallback_score):
     if isinstance(ai_data, dict):
         quality = ai_data.get("quality_score")
@@ -381,16 +362,12 @@ def _extract_score(ai_data, fallback_score):
         if isinstance(quality, (int, float)):
             return int(quality), "ai"
     return fallback_score, "local"
-
-
 def _normalize_list(value):
     if isinstance(value, list):
         return [str(item).strip() for item in value if str(item).strip()]
     if isinstance(value, str):
         return [line.strip() for line in value.splitlines() if line.strip()]
     return []
-
-
 FX_RATE_CFA_PER_USD = 600
 PRICE_A = 29900  # Particulier / Candidat
 PRICE_B = 59900  # Entreprise / Vitrine
@@ -398,20 +375,15 @@ MODE_LABELS = {"A": "Particulier (candidat)", "B": "Entreprise (vitrine)"}
 HOSTING_MONTH_CFA = 2000
 HOSTING_YEAR_CFA = 24000
 HOSTING_YEAR_DISCOUNT_CFA = 19900
-
-
 def _format_price(cfa_value):
     usd_value = cfa_value / FX_RATE_CFA_PER_USD
     return f"{cfa_value:,} CFA (~${usd_value:.2f})".replace(",", " ")
-
-
 def _cohere_generate(payload):
     cohere_cfg = st.secrets.get("cohere", {})
     api_key = cohere_cfg.get("api_key")
     model = cohere_cfg.get("model", "command-a-03-2025")
     if not api_key:
         return None, model, "missing_api_key"
-
     co = cohere.ClientV2(api_key)
     language_raw = str(payload.get("portfolio_info", {}).get("language", "")).lower()
     language_other = str(payload.get("portfolio_info", {}).get("language_other", "")).strip()
@@ -422,7 +394,6 @@ def _cohere_generate(payload):
         output_language = "French and English"
     elif "autre" in language_raw and language_other:
         output_language = f"{language_other}"
-
     system_prompt = (
         "Return valid JSON only. No markdown, no commentary, no extra keys."
     )
@@ -449,7 +420,6 @@ def _cohere_generate(payload):
         "Input JSON:\n"
         f"{json.dumps(payload, ensure_ascii=True)}"
     )
-
     resp = co.chat(
         model=model,
         messages=[
@@ -457,7 +427,6 @@ def _cohere_generate(payload):
             {"role": "user", "content": user_prompt},
         ],
     )
-
     text = ""
     try:
         text = resp.message.content[0].text
@@ -465,8 +434,6 @@ def _cohere_generate(payload):
         text = str(resp)
     parsed, error = _extract_json(text)
     return parsed, model, error
-
-
 def _init_mode(page):
     params = st.query_params
     qp = params.get("mode")
@@ -478,26 +445,20 @@ def _init_mode(page):
         st.session_state.pop("mode", None)
         return None
     return st.session_state.get("mode")
-
-
 mongo = st.secrets["mongodb"]
 uri = mongo["uri"]
 db_name = mongo.get("db", "portfolio")
 col_name = mongo.get("collection", "leads")
-
 client = MongoClient(uri, server_api=ServerApi("1"))
 db = client[db_name]
 leads = db[col_name]
 fs = gridfs.GridFS(db)
-
 page = st.query_params.get("page") or "home"
 page = str(page).lower()
 mode = _init_mode(page)
-
 # Mets ton URL portfolio ici
 PORTFOLIO_URL = "https://lamadokouyayra.vercel.app/"
 WHATSAPP_URL = "https://wa.me/22892092572"
-
 def _render_home():
     st.title("Choisissez votre besoin")
     col_a, col_b = st.columns(2, gap="large")
@@ -532,15 +493,12 @@ def _render_home():
             st.query_params["mode"] = "B"
             st.rerun()
 ADMIN_MODE = bool(st.secrets.get("admin", {}).get("enabled", False))
-
-
 def _sales_agent_reply(user_message, history):
     cohere_cfg = st.secrets.get("cohere", {})
     api_key = cohere_cfg.get("api_key")
     model = cohere_cfg.get("model", "command-a-03-2025")
     if not api_key:
         return "Service indisponible pour le moment. Contactez-nous sur WhatsApp."
-
     co = cohere.ClientV2(api_key)
     system_prompt = (
         "You are a strong sales assistant for a portfolio service. "
@@ -551,20 +509,16 @@ def _sales_agent_reply(user_message, history):
         "Hosting annuel 24 000 CFA/an (~$40.00). Offre annuelle 19 900 CFA/an (~$33.17). "
         "Ask one short clarifying question and guide to conversion."
     )
-
     messages = [{"role": "system", "content": system_prompt}]
     for item in history[-6:]:
         messages.append({"role": "user", "content": item["user"]})
         messages.append({"role": "assistant", "content": item["assistant"]})
     messages.append({"role": "user", "content": user_message})
-
     try:
         resp = co.chat(model=model, messages=messages)
         return resp.message.content[0].text
     except Exception:
         return "Je peux aider sur le service. Posez votre question ou contactez-nous sur WhatsApp."
-
-
 def _render_chat_html(messages, typing_text=""):
     rows = []
     for item in messages:
@@ -583,8 +537,6 @@ def _render_chat_html(messages, typing_text=""):
             f'<span class="sidebar-chat-bot">{html.escape(typing_text)}</span></div>'
         )
     return '<div class="sidebar-chat-box">' + "".join(rows) + "</div>"
-
-
 def _render_sales_sidebar():
     mode = st.session_state.get("mode", "A")
     main_price = PRICE_A if mode == "A" else PRICE_B
@@ -620,14 +572,12 @@ def _render_sales_sidebar():
         """,
         unsafe_allow_html=True,
     )
-
     st.session_state.setdefault("sales_chat", [])
     chat_placeholder = st.sidebar.empty()
     chat_placeholder.markdown(
         _render_chat_html(st.session_state["sales_chat"]),
         unsafe_allow_html=True,
     )
-
     with st.sidebar.form("sales_form", clear_on_submit=True):
         col_input, col_btn = st.columns([5, 1])
         with col_input:
@@ -639,7 +589,6 @@ def _render_sales_sidebar():
             )
         with col_btn:
             submitted = st.form_submit_button(">")
-
         if submitted and user_input.strip():
             reply = _sales_agent_reply(user_input.strip(), st.session_state["sales_chat"])
             typing = ""
@@ -650,17 +599,13 @@ def _render_sales_sidebar():
                     unsafe_allow_html=True,
                 )
                 time.sleep(0.02)
-
             st.session_state["sales_chat"].append(
                 {"user": user_input.strip(), "assistant": reply}
             )
             st.rerun()
-
-
 if page != "service" or mode not in ("A", "B"):
     _render_home()
     st.stop()
-
 mode_choice = st.radio(
     "Choisissez votre profil",
     ["Particulier (A)", "Entreprise (B)"],
@@ -672,12 +617,8 @@ if new_mode != mode:
     st.query_params["page"] = "service"
     st.query_params["mode"] = new_mode
     st.rerun()
-
 mode = new_mode
-
 _render_sales_sidebar()
-
-
 def _send_lead_email(doc, lead_id):
     smtp_cfg = st.secrets.get("smtp", {})
     host = smtp_cfg.get("host")
@@ -686,17 +627,14 @@ def _send_lead_email(doc, lead_id):
     password = smtp_cfg.get("password")
     to_email = smtp_cfg.get("to_email")
     sender = smtp_cfg.get("from_email") or username
-
     if not all([host, port, username, password, to_email, sender]):
         return False, "smtp_config_missing"
-
     msg = EmailMessage()
     lead_mode = doc.get("lead_mode")
     subject_name = doc.get("full_name") or doc.get("company_name") or "Sans nom"
     msg["Subject"] = f"Nouveau brief portfolio: {subject_name}"
     msg["From"] = sender
     msg["To"] = to_email
-
     if lead_mode == "B":
         body = (
             f"Reference: {lead_id}\n"
@@ -732,7 +670,6 @@ def _send_lead_email(doc, lead_id):
             f"Besoin:\n{doc.get('need')}\n"
         )
     msg.set_content(body)
-
     try:
         with smtplib.SMTP(host, port, timeout=10) as server:
             server.starttls()
@@ -741,8 +678,6 @@ def _send_lead_email(doc, lead_id):
         return True, None
     except Exception as exc:
         return False, str(exc)
-
-
 # -------------------------
 if page == "service":
     # Header / Hero
@@ -761,7 +696,6 @@ if page == "service":
         if os.path.isfile(candidate):
             photo_path = candidate
             break
-
     photo_html = ""
     if mode == "B":
         # mockup placeholder for entreprise
@@ -796,7 +730,6 @@ if page == "service":
             photo_html = f'<img src="data:{mime};base64,{encoded}" alt="Photo portrait" />'
         else:
             photo_html = '<div class="photo-placeholder">Photo en attente — ajoute une image dans `assets/`</div>'
-
     HERO_COPY = {
         "A": {
             "title": "Je crée votre portfolio candidat, clair et crédible",
@@ -813,9 +746,7 @@ if page == "service":
             "cta_secondary_url": "https://innovaplus.africa/",
         },
     }
-
     hero_cfg = HERO_COPY[mode]
-
     st.markdown(
         f"""
         <div class="hero">
@@ -843,10 +774,7 @@ if page == "service":
         """,
         unsafe_allow_html=True,
     )
-
 st.write("")
-
-
 # -------------------------
 # Proof / badges
 # -------------------------
@@ -867,10 +795,7 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-
 st.write("")
-
-
 # -------------------------
 # CTA buttons
 # -------------------------
@@ -890,8 +815,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 st.write("")
-
-
 # -------------------------
 # Benefits / How it works
 # -------------------------
@@ -911,7 +834,6 @@ CONTENT_OBTIENS = {
         "Mobile-first",
     ],
 }
-
 CONTENT_HOW = {
     "A": [
         "Tu envoies CV + 2–3 projets",
@@ -926,13 +848,10 @@ CONTENT_HOW = {
         "Ajustements + livraison",
     ],
 }
-
 def _render_list(items):
     return "<ul>" + "".join(f"<li>{x}</li>" for x in items) + "</ul>"
-
 if page == "service":
     s1, s2 = st.columns(2, gap="large")
-
     with s1:
         st.markdown(
             f"""
@@ -946,7 +865,6 @@ if page == "service":
             """,
             unsafe_allow_html=True,
         )
-
     with s2:
         st.markdown(
             f"""
@@ -957,10 +875,7 @@ if page == "service":
             """,
             unsafe_allow_html=True,
         )
-
 st.write("")
-
-
 # -------------------------
 # Formulaire (brief complet)
 # -------------------------
@@ -969,8 +884,6 @@ def _get_index(options, value):
         return options.index(value)
     except ValueError:
         return 0
-
-
 FORM_A_KEYS = [
     "full_name",
     "phone",
@@ -993,7 +906,6 @@ FORM_A_KEYS = [
     "competitors",
     "consent",
 ]
-
 FORM_B_KEYS = [
     "company_name",
     "sector",
@@ -1012,13 +924,10 @@ FORM_B_KEYS = [
     "hosting_plan_b",
     "consent_b",
 ]
-
 for key in FORM_A_KEYS + FORM_B_KEYS:
     st.session_state.setdefault(key, "")
-
 form_errors_a = set(st.session_state.get("form_errors_a", []))
 form_errors_b = set(st.session_state.get("form_errors_b", []))
-
 ERROR_FIELD_SELECTORS_A = {
     "full_name": 'input[aria-label="Nom complet *"]',
     "phone": 'input[aria-label="WhatsApp / T??l??phone *"]',
@@ -1026,20 +935,7 @@ ERROR_FIELD_SELECTORS_A = {
     "role": 'input[aria-label="Poste / r??le vis?? *"]',
     "need": 'textarea[aria-label="Contexte et objectifs (secteur, niveau d???exp??rience, message ?? transmettre) *"]',
 }
-
-ERROR_FIELD_SELECTORS_B = {
-    "company_name": 'input[aria-label="Nom entreprise *"]',
-    "sector": 'input[aria-label="Activit?? / secteur *"]',
-    "country_b": 'input[aria-label="Pays *"]',
-    "city_b": 'input[aria-label="Ville *"]',
-    "email_b": 'input[aria-label="Email pro *"]',
-    "phone_b": 'input[aria-label="WhatsApp / T??l??phone *"]',
-    "services_products": 'textarea[aria-label="Services / produits (3 ?? 7 items) *"]',
-    "deadline_b": 'select[aria-label="D??lai souhait?? *"]',
-    "consent_b": 'input[aria-label="J???accepte d?????tre recontact?? pour cette demande *"]',
-}
-
-
+ERROR_FIELD_SELECTORS_B = {}
 def _render_error_css(keys, mapping):
     rules = []
     for key in keys:
@@ -1051,8 +947,6 @@ def _render_error_css(keys, mapping):
             )
     if rules:
         st.markdown(f"<style>{''.join(rules)}</style>", unsafe_allow_html=True)
-
-
 _render_error_css(form_errors_a, ERROR_FIELD_SELECTORS_A)
 _render_error_css(form_errors_b, ERROR_FIELD_SELECTORS_B)
 OBJECTIVE_OPTIONS = ["emploi", "freelance", "business", "études", "autre"]
@@ -1061,41 +955,37 @@ DEADLINE_OPTIONS = ["24h", "48h", "72h", "1 semaine", "2 semaines"]
 BUDGET_OPTIONS = ["À discuter", "Petit", "Moyen", "Élevé"]
 STYLE_OPTIONS = ["Sobre", "Élégant", "Créatif", "Corporate", "Minimal"]
 MAX_UPLOAD_MB = 10
-
-
 def _format_mb(value):
     return f"{value / (1024 * 1024):.1f} MB"
-
 if mode == "B":
     with st.form("lead_form_b", clear_on_submit=True):
         st.markdown('<div class="form-title">Brief entreprise</div>', unsafe_allow_html=True)
         st.markdown('<div class="form-card"><div class="form-card-title">Entreprise</div>', unsafe_allow_html=True)
         a, b = st.columns(2)
         with a:
-            company_name = st.text_input("Nom entreprise *", value=st.session_state["company_name"])
+            company_name = st.text_input("Nom entreprise", value=st.session_state["company_name"])
             if "company_name" in form_errors_b:
                 st.error("Champ requis")
-            sector = st.text_input("Activite / secteur *", value=st.session_state["sector"])
+            sector = st.text_input("Activite / secteur", value=st.session_state["sector"])
             if "sector" in form_errors_b:
                 st.error("Champ requis")
-            email_b = st.text_input("Email pro *", value=st.session_state["email_b"])
+            email_b = st.text_input("Email pro", value=st.session_state["email_b"])
             if "email_b" in form_errors_b:
                 st.error("Champ requis")
         with b:
-            country_b = st.text_input("Pays *", value=st.session_state["country_b"])
+            country_b = st.text_input("Pays", value=st.session_state["country_b"])
             if "country_b" in form_errors_b:
                 st.error("Champ requis")
-            city_b = st.text_input("Ville *", value=st.session_state["city_b"])
+            city_b = st.text_input("Ville", value=st.session_state["city_b"])
             if "city_b" in form_errors_b:
                 st.error("Champ requis")
-            phone_b = st.text_input("WhatsApp / Telephone *", value=st.session_state["phone_b"])
+            phone_b = st.text_input("WhatsApp / Telephone", value=st.session_state["phone_b"])
             if "phone_b" in form_errors_b:
                 st.error("Champ requis")
         st.markdown("</div>", unsafe_allow_html=True)
-
         st.markdown('<div class="form-card"><div class="form-card-title">Offre</div>', unsafe_allow_html=True)
         services_products = st.text_area(
-            "Services / produits (3 a 7 items) *",
+            "Services / produits",
             height=120,
             value=st.session_state["services_products"],
         )
@@ -1108,7 +998,6 @@ if mode == "B":
         with d:
             pricing = st.text_input("Prix / forfaits (option)", value=st.session_state["pricing"])
         st.markdown("</div>", unsafe_allow_html=True)
-
         st.markdown('<div class="form-card"><div class="form-card-title">Preuves</div>', unsafe_allow_html=True)
         references = st.text_area(
             "Realisations / references (texte ou liens)",
@@ -1120,7 +1009,6 @@ if mode == "B":
             value=st.session_state["social_links"],
         )
         st.markdown("</div>", unsafe_allow_html=True)
-
         st.markdown('<div class="form-card"><div class="form-card-title">Branding</div>', unsafe_allow_html=True)
         brand_colors = st.text_input("Couleurs", value=st.session_state["brand_colors"])
         b_logo = st.file_uploader(
@@ -1136,12 +1024,11 @@ if mode == "B":
             key="b_photos",
         )
         st.markdown("</div>", unsafe_allow_html=True)
-
         st.markdown('<div class="form-card"><div class="form-card-title">Livraison</div>', unsafe_allow_html=True)
         e, f = st.columns(2)
         with e:
             deadline_b = st.selectbox(
-                "Delai souhaite *",
+                "Delai souhaite",
                 DEADLINE_OPTIONS,
                 index=_get_index(DEADLINE_OPTIONS, st.session_state["deadline_b"] or DEADLINE_OPTIONS[0]),
             )
@@ -1154,192 +1041,145 @@ if mode == "B":
                 index=_get_index(["aucun", "mensuel", "annuel"], st.session_state["hosting_plan_b"] or "aucun"),
             )
         st.markdown("</div>", unsafe_allow_html=True)
-
         st.markdown('<div class="form-card"><div class="form-card-title">Consentement</div>', unsafe_allow_html=True)
         consent_b = st.checkbox(
-            "J'accepte d'etre recontacte pour cette demande *",
+            "J'accepte d'etre recontacte pour cette demande",
             value=bool(st.session_state["consent_b"]),
         )
         if "consent_b" in form_errors_b:
             st.error("Champ requis")
         st.markdown("</div>", unsafe_allow_html=True)
-
         submit_b = st.form_submit_button("Envoyer ma demande (entreprise)")
 
         if submit_b:
-            missing_keys = []
-            if not company_name.strip():
-                missing_keys.append("company_name")
-            if not sector.strip():
-                missing_keys.append("sector")
-            if not country_b.strip():
-                missing_keys.append("country_b")
-            if not city_b.strip():
-                missing_keys.append("city_b")
-            if not email_b.strip():
-                missing_keys.append("email_b")
-            if not phone_b.strip():
-                missing_keys.append("phone_b")
-            if not services_products.strip():
-                missing_keys.append("services_products")
-            if not deadline_b:
-                missing_keys.append("deadline_b")
-            if not consent_b:
-                missing_keys.append("consent_b")
-
             def _split_items(text):
                 import re
                 return [i.strip() for i in re.split(r"[\\n,;]+", text or "") if i.strip()]
 
             services_list = _split_items(services_products)
-            if services_products and (len(services_list) < 3 or len(services_list) > 7):
-                st.error("Merci d'indiquer entre 3 et 7 services/produits.")
-                missing_keys.append("services_products")
 
+            st.session_state.update({{
+                "company_name": company_name,
+                "sector": sector,
+                "country_b": country_b,
+                "city_b": city_b,
+                "email_b": email_b,
+                "phone_b": phone_b,
+                "services_products": services_products,
+                "service_area": service_area,
+                "hours": hours,
+                "pricing": pricing,
+                "references": references,
+                "social_links": social_links,
+                "brand_colors": brand_colors,
+                "deadline_b": deadline_b,
+                "hosting_plan_b": hosting_plan_b,
+                "consent_b": consent_b,
+            }})
+
+            stored_files = []
             file_errors = []
-            for f in [b_logo] + (b_photos or []):
-                if f and f.size > MAX_UPLOAD_MB * 1024 * 1024:
-                    file_errors.append(
-                        f"{f.name} depasse {MAX_UPLOAD_MB} MB (taille: {_format_mb(f.size)})"
-                    )
-
-            st.session_state.update(
-                {
-                    "company_name": company_name,
-                    "sector": sector,
-                    "country_b": country_b,
-                    "city_b": city_b,
-                    "email_b": email_b,
-                    "phone_b": phone_b,
-                    "services_products": services_products,
-                    "service_area": service_area,
-                    "hours": hours,
-                    "pricing": pricing,
-                    "references": references,
-                    "social_links": social_links,
-                    "brand_colors": brand_colors,
-                    "deadline_b": deadline_b,
-                    "hosting_plan_b": hosting_plan_b,
-                    "consent_b": consent_b,
-                }
-            )
-
-            if missing_keys or file_errors:
-                st.session_state["form_errors_b"] = missing_keys
-                _render_error_css(missing_keys, ERROR_FIELD_SELECTORS_B)
-                if missing_keys:
-                    st.error("Merci de completer les champs requis en rouge.")
-                if file_errors:
-                    st.error("Fichiers trop volumineux : " + ", ".join(file_errors))
-            else:
-                st.session_state["form_errors_b"] = []
-                stored_files = []
-                for f, group in [(b_logo, "logo")] + [(x, "photos") for x in (b_photos or [])]:
-                    if not f:
-                        continue
-                    try:
-                        data = f.getvalue()
-                        if not isinstance(data, (bytes, bytearray)):
-                            data = f.read()
-                        file_id = fs.put(
-                            data,
-                            filename=str(f.name),
-                            content_type=f.type,
-                            metadata={
-                                "uploaded_at": datetime.now(timezone.utc),
-                                "lead_email": email_b.strip(),
-                                "group": group,
-                            },
-                        )
-                        stored_files.append(
-                            {
-                                "file_id": str(file_id),
-                                "name": f.name,
-                                "type": f.type,
-                                "size": f.size,
-                                "group": group,
-                            }
-                        )
-                    except Exception:
-                        st.error("Echec de l'upload. Reessayez plus tard.")
-
-                doc = {
-                    "company_name": company_name.strip(),
-                    "sector": sector.strip(),
-                    "country": country_b.strip(),
-                    "city": city_b.strip(),
-                    "email": email_b.strip(),
-                    "phone_whatsapp": phone_b.strip(),
-                    "lead_mode": "B",
-                    "services_products": services_list,
-                    "service_area": service_area.strip() if service_area else None,
-                    "hours": hours.strip() if hours else None,
-                    "pricing": pricing.strip() if pricing else None,
-                    "references": references.strip() if references else None,
-                    "social_links": social_links.strip() if social_links else None,
-                    "brand_colors": brand_colors.strip() if brand_colors else None,
-                    "deadline": deadline_b,
-                    "hosting_plan": hosting_plan_b,
-                    "uploaded_files": stored_files,
-                    "consent_contact": True,
-                    "lead_status": "new",
-                    "source": "streamlit_site",
-                    "created_at": datetime.now(timezone.utc),
-                }
-
-                res = None
-                db_ok = False
+            for f, group in [(b_logo, "logo")] + [(x, "photos") for x in (b_photos or [])]:
+                if not f:
+                    continue
+                if f.size > MAX_UPLOAD_MB * 1024 * 1024:
+                    file_errors.append(f"{{f.name}} depasse {{MAX_UPLOAD_MB}} MB")
+                    continue
                 try:
-                    res = leads.insert_one(doc)
-                    db_ok = True
+                    data = f.getvalue()
+                    if not isinstance(data, (bytes, bytearray)):
+                        data = f.read()
+                    file_id = fs.put(
+                        data,
+                        filename=str(f.name),
+                        content_type=f.type,
+                        metadata={{
+                            "uploaded_at": datetime.now(timezone.utc),
+                            "lead_email": (email_b or "").strip(),
+                            "group": group,
+                        }},
+                    )
+                    stored_files.append({{
+                        "file_id": str(file_id),
+                        "name": f.name,
+                        "type": f.type,
+                        "size": f.size,
+                        "group": group,
+                    }})
                 except Exception:
-                    db_ok = False
+                    st.error("Echec de l'upload. Reessayez plus tard.")
 
-                ref_id = str(res.inserted_id) if res else "email-only"
-                email_ok, email_error = _send_lead_email(doc, ref_id)
+            if file_errors:
+                st.warning("Fichiers ignores (trop volumineux): " + ", ".join(file_errors))
 
-                if db_ok:
-                    st.success(f"Demande entreprise recue. Reference: {res.inserted_id}")
-                    st.info("Demande entreprise recue. Reponse rapide apres analyse des elements.")
+            doc = {{
+                "company_name": (company_name or "").strip(),
+                "sector": (sector or "").strip(),
+                "country": (country_b or "").strip(),
+                "city": (city_b or "").strip(),
+                "email": (email_b or "").strip(),
+                "phone_whatsapp": (phone_b or "").strip(),
+                "lead_mode": "B",
+                "services_products": services_list,
+                "service_area": service_area.strip() if service_area else None,
+                "hours": hours.strip() if hours else None,
+                "pricing": pricing.strip() if pricing else None,
+                "references": references.strip() if references else None,
+                "social_links": social_links.strip() if social_links else None,
+                "brand_colors": brand_colors.strip() if brand_colors else None,
+                "deadline": deadline_b,
+                "hosting_plan": hosting_plan_b,
+                "uploaded_files": stored_files,
+                "consent_contact": bool(consent_b),
+                "lead_status": "new",
+                "source": "streamlit_site",
+                "created_at": datetime.now(timezone.utc),
+            }}
+
+            res = None
+            db_ok = False
+            try:
+                res = leads.insert_one(doc)
+                db_ok = True
+            except Exception:
+                db_ok = False
+
+            ref_id = str(res.inserted_id) if res else "email-only"
+            email_ok, email_error = _send_lead_email(doc, ref_id)
+
+            if db_ok:
+                st.success(f"Demande entreprise recue. Reference: {{res.inserted_id}}")
+                st.info("Demande entreprise recue. Reponse rapide apres analyse des elements.")
+            else:
+                if email_ok:
+                    st.success("Demande entreprise recue.")
+                    st.info("Base temporairement indisponible. Votre demande a ete envoyee par email.")
                 else:
-                    if email_ok:
-                        st.success("Demande entreprise recue.")
-                        st.info("Base temporairement indisponible. Votre demande a ete envoyee par email.")
-                    else:
-                        st.error("Le service est temporairement indisponible. Merci de reessayer plus tard.")
-                        st.stop()
-
-                if not email_ok:
-                    if db_ok:
-                        leads.update_one(
-                            {"_id": res.inserted_id},
-                            {"$set": {"email_status": "failed", "email_error": email_error}},
-                        )
-                else:
-                    if db_ok:
-                        leads.update_one(
-                            {"_id": res.inserted_id},
-                            {"$set": {"email_status": "sent"}},
-                        )
-
-                if not db_ok:
+                    st.error("Le service est temporairement indisponible. Merci de reessayer plus tard.")
                     st.stop()
 
-                if stored_files:
-                    st.info(
-                        "Fichiers recus: "
-                        + ", ".join(f"{f['name']} ({_format_mb(f.get('size', 0))})" for f in stored_files)
-                    )
+            if not email_ok:
+                if db_ok:
+                    leads.update_one({{"_id": res.inserted_id}}, {{"$set": {{"email_status": "failed", "email_error": email_error}}}})
+            else:
+                if db_ok:
+                    leads.update_one({{"_id": res.inserted_id}}, {{"$set": {{"email_status": "sent"}}}})
 
-                st.session_state["last_lead_id"] = str(res.inserted_id) if res else ""
-                for key in FORM_B_KEYS:
-                    st.session_state[key] = ""
-                if "b_logo" in st.session_state:
-                    st.session_state.pop("b_logo")
-                if "b_photos" in st.session_state:
-                    st.session_state.pop("b_photos")
+            if not db_ok:
+                st.stop()
 
-    st.stop()
+            if stored_files:
+                st.info("Fichiers recus: " + ", ".join(f"{{f['name']}} ({{_format_mb(f.get('size', 0))}})" for f in stored_files))
+
+            st.session_state["last_lead_id"] = str(res.inserted_id) if res else ""
+            for key in FORM_B_KEYS:
+                st.session_state[key] = ""
+            if "b_logo" in st.session_state:
+                st.session_state.pop("b_logo")
+            if "b_photos" in st.session_state:
+                st.session_state.pop("b_photos")
+
+        st.stop()
 
 with st.form("lead_form", clear_on_submit=True):
     st.markdown('<div class="form-title">Vos informations pour commencer</div>', unsafe_allow_html=True)
@@ -1359,7 +1199,6 @@ with st.form("lead_form", clear_on_submit=True):
         country = st.text_input("Pays", value=st.session_state["country"])
         city = st.text_input("Ville", value=st.session_state["city"])
     st.markdown("</div>", unsafe_allow_html=True)
-
     st.markdown('<div class="form-card"><div class="form-card-title">Objectif du portfolio</div>', unsafe_allow_html=True)
     c, d = st.columns(2)
     with c:
@@ -1389,7 +1228,6 @@ with st.form("lead_form", clear_on_submit=True):
             index=_get_index(BUDGET_OPTIONS, st.session_state["budget"] or BUDGET_OPTIONS[0]),
         )
     st.markdown("</div>", unsafe_allow_html=True)
-
     st.markdown('<div class="form-card"><div class="form-card-title">Cible, style et valeur</div>', unsafe_allow_html=True)
     e, f = st.columns(2)
     with e:
@@ -1414,7 +1252,6 @@ with st.form("lead_form", clear_on_submit=True):
             value=st.session_state["competitors"],
         )
     st.markdown("</div>", unsafe_allow_html=True)
-
     st.markdown('<div class="form-card"><div class="form-card-title">Contexte et objectifs</div>', unsafe_allow_html=True)
     need = st.text_area(
         "Contexte et objectifs (secteur, niveau d’expérience, message à transmettre) *",
@@ -1424,7 +1261,6 @@ with st.form("lead_form", clear_on_submit=True):
     if "need" in form_errors_a:
         st.error("Champ requis")
     st.markdown("</div>", unsafe_allow_html=True)
-
     st.markdown('<div class="form-card"><div class="form-card-title">Fichiers et ressources</div>', unsafe_allow_html=True)
     content_assets = st.text_area(
         "Fichiers déjà prêts (CV, photos, logos, textes, références)",
@@ -1439,7 +1275,6 @@ with st.form("lead_form", clear_on_submit=True):
         key="uploaded_files",
     )
     st.markdown("</div>", unsafe_allow_html=True)
-
     st.markdown('<div class="form-card"><div class="form-card-title">Consentement</div>', unsafe_allow_html=True)
     consent = st.checkbox(
         "J’accepte d’être recontacté pour cette demande *",
@@ -1449,7 +1284,6 @@ with st.form("lead_form", clear_on_submit=True):
         st.error("Champ requis")
     st.markdown("</div>", unsafe_allow_html=True)
     submit = st.form_submit_button("Envoyer")
-
     if submit:
         # validation minimale (tu veux un formulaire strict)
         missing_keys = []
@@ -1465,7 +1299,6 @@ with st.form("lead_form", clear_on_submit=True):
             missing_keys.append("role")
         if not consent:
             missing_keys.append("consent")
-
         file_errors = []
         if uploaded_files:
             for f in uploaded_files:
@@ -1473,7 +1306,6 @@ with st.form("lead_form", clear_on_submit=True):
                     file_errors.append(
                         f"{f.name} depasse {MAX_UPLOAD_MB} MB (taille: {_format_mb(f.size)})"
                     )
-
         st.session_state.update(
             {
                 "full_name": full_name,
@@ -1498,7 +1330,6 @@ with st.form("lead_form", clear_on_submit=True):
                 "consent": consent,
             }
         )
-
         if missing_keys or file_errors:
             st.session_state["form_errors_a"] = missing_keys
             _render_error_css(missing_keys, ERROR_FIELD_SELECTORS_A)
@@ -1536,15 +1367,14 @@ with st.form("lead_form", clear_on_submit=True):
                     except Exception:
                         upload_failed = True
                         st.error("Echec de l'upload. Reessayez plus tard.")
-
             doc = {
                 "full_name": full_name.strip(),
                 "phone_whatsapp": phone.strip(),
-            "email": email.strip(),
-            "lead_mode": mode,
-            "country": country.strip() if country else None,
-            "city": city.strip() if city else None,
-            "objective": objective,
+                "email": email.strip(),
+                "lead_mode": mode,
+                "country": country.strip() if country else None,
+                "city": city.strip() if city else None,
+                "objective": objective,
                 "target_role": role.strip(),
                 "deadline": deadline,
                 "language": language,
@@ -1564,7 +1394,6 @@ with st.form("lead_form", clear_on_submit=True):
                 "source": "streamlit_site",
                 "created_at": datetime.now(timezone.utc),
             }
-
             res = None
             db_ok = False
             try:
@@ -1572,10 +1401,8 @@ with st.form("lead_form", clear_on_submit=True):
                 db_ok = True
             except Exception:
                 db_ok = False
-
             ref_id = str(res.inserted_id) if res else "email-only"
             email_ok, email_error = _send_lead_email(doc, ref_id)
-
             if db_ok:
                 st.success(f"Demande envoyee. Reference: {res.inserted_id}")
                 st.info("Brief recu. Je vous contacte sous 24-48h.")
@@ -1586,7 +1413,6 @@ with st.form("lead_form", clear_on_submit=True):
                 else:
                     st.error("Le service est temporairement indisponible. Merci de reessayer plus tard.")
                     st.stop()
-
             if not email_ok:
                 if db_ok:
                     leads.update_one(
@@ -1599,10 +1425,8 @@ with st.form("lead_form", clear_on_submit=True):
                         {"_id": res.inserted_id},
                         {"$set": {"email_status": "sent"}},
                     )
-
             if not db_ok:
                 st.stop()
-
             local_score = _local_quality_score(doc)
             ai_payload = _build_ai_payload(doc)
             ai_result = None
@@ -1610,7 +1434,6 @@ with st.form("lead_form", clear_on_submit=True):
             ai_error = None
             ai_model = st.secrets.get("cohere", {}).get("model", "command-a-03-2025")
             ai_latency_ms = None
-
             start_time = time.time()
             try:
                 ai_result, ai_model, ai_error = _cohere_generate(ai_payload)
@@ -1620,12 +1443,10 @@ with st.form("lead_form", clear_on_submit=True):
             except Exception as exc:
                 ai_latency_ms = int((time.time() - start_time) * 1000)
                 ai_error = str(exc)
-
             if ai_result is not None and not isinstance(ai_result, dict):
                 ai_error = "invalid_ai_response_type"
                 ai_result = None
                 ai_status = "failed"
-
             ai_score, ai_score_source = _extract_score(ai_result, local_score)
             leads.update_one(
                 {"_id": res.inserted_id},
@@ -1641,7 +1462,6 @@ with st.form("lead_form", clear_on_submit=True):
                     }
                 },
             )
-
             if ai_status != "success":
                 st.warning("Analyse IA indisponible pour le moment.")
             else:
@@ -1655,7 +1475,6 @@ with st.form("lead_form", clear_on_submit=True):
                     summary = _normalize_list(ai_result.get("brief_summary"))
                     for line in summary:
                         st.write(f"- {line}")
-
                     st.subheader("Plan du portfolio")
                     plan = ai_result.get("portfolio_plan") or []
                     for item in plan:
@@ -1667,24 +1486,20 @@ with st.form("lead_form", clear_on_submit=True):
                         st.markdown(f"**{section}** ({priority})")
                         if content:
                             st.write(content)
-
                     st.subheader("Checklist des elements a fournir")
                     checklist = _normalize_list(ai_result.get("assets_checklist"))
                     for item in checklist:
                         st.write(f"- {item}")
-
                     if ADMIN_MODE:
                         st.subheader("Message WhatsApp")
                         whatsapp_message = ai_result.get("whatsapp_message", "")
                         if st.button("Copier message WhatsApp"):
                             st.toast("Message pret a copier ci-dessous.")
                         st.text_area("Message WhatsApp", value=whatsapp_message, height=160)
-
                         st.subheader("Livrables")
                         deliverables = _normalize_list(ai_result.get("deliverables"))
                         for item in deliverables:
                             st.write(f"- {item}")
-
                         estimate = ai_result.get("estimate", {})
                         if isinstance(estimate, dict):
                             price_range = estimate.get("price_range")
@@ -1692,12 +1507,10 @@ with st.form("lead_form", clear_on_submit=True):
                             risk_level = estimate.get("risk_level")
                             st.markdown("**Estimation**")
                             st.write(f"Prix: {price_range} | Delai: {eta_days} jours | Risque: {risk_level}")
-
                         tags = _normalize_list(ai_result.get("internal_tags"))
                         if tags:
                             st.markdown("**Tags internes**")
                             st.write(", ".join(tags))
-
                         if stored_files:
                             st.subheader("Fichiers uploades")
                             for item in stored_files:
@@ -1713,44 +1526,35 @@ with st.form("lead_form", clear_on_submit=True):
                                     )
                                 except Exception:
                                     st.write(f"Fichier indisponible: {label}")
-
             if stored_files:
                 st.info(
                     "Fichiers recus: "
                     + ", ".join(f"{f['name']} ({_format_mb(f.get('size', 0))})" for f in stored_files)
                 )
-
             st.session_state["last_lead_id"] = str(res.inserted_id)
             st.session_state["last_ai_result"] = ai_result
             st.session_state["last_ai_score"] = ai_score
             st.session_state["last_ai_status"] = ai_status
-
             for key in FORM_KEYS:
                 st.session_state[key] = ""
             if "uploaded_files" in st.session_state:
                 st.session_state.pop("uploaded_files")
-
-
 # Footer
 st.write("")
 st.caption("© Portfolio — Brief & demande de devis")
-
 last_lead_id = st.session_state.get("last_lead_id")
 last_ai_result = st.session_state.get("last_ai_result")
 last_ai_score = st.session_state.get("last_ai_score")
 last_ai_status = st.session_state.get("last_ai_status")
-
 if last_lead_id and last_ai_status == "success" and isinstance(last_ai_score, int) and last_ai_score < 60:
     st.markdown("### Precisions manquantes")
     questions = _normalize_list(last_ai_result.get("clarifying_questions") if last_ai_result else [])
-
     with st.form("clarify_form", clear_on_submit=True):
         answers = {}
         for idx, question in enumerate(questions):
             answers[str(idx + 1)] = st.text_area(question, height=80)
         extra = st.text_area("Autres precisions utiles", height=80)
         submit_clarify = st.form_submit_button("Envoyer les precisions")
-
     if submit_clarify:
         clarifications = {
             "questions": questions,
@@ -1767,7 +1571,6 @@ if last_lead_id and last_ai_status == "success" and isinstance(last_ai_score, in
                 }
             },
         )
-
         updated_doc = leads.find_one({"_id": lead_id})
         local_score = _local_quality_score(updated_doc)
         ai_payload = _build_ai_payload(updated_doc)
@@ -1776,7 +1579,6 @@ if last_lead_id and last_ai_status == "success" and isinstance(last_ai_score, in
         ai_error = None
         ai_model = st.secrets.get("cohere", {}).get("model", "command-a-03-2025")
         ai_latency_ms = None
-
         start_time = time.time()
         try:
             ai_result, ai_model, ai_error = _cohere_generate(ai_payload)
@@ -1786,12 +1588,10 @@ if last_lead_id and last_ai_status == "success" and isinstance(last_ai_score, in
         except Exception as exc:
             ai_latency_ms = int((time.time() - start_time) * 1000)
             ai_error = str(exc)
-
         if ai_result is not None and not isinstance(ai_result, dict):
             ai_error = "invalid_ai_response_type"
             ai_result = None
             ai_status = "failed"
-
         ai_score, ai_score_source = _extract_score(ai_result, local_score)
         leads.update_one(
             {"_id": lead_id},
@@ -1807,7 +1607,6 @@ if last_lead_id and last_ai_status == "success" and isinstance(last_ai_score, in
                 }
             },
         )
-
         st.session_state["last_ai_result"] = ai_result
         st.session_state["last_ai_score"] = ai_score
         st.session_state["last_ai_status"] = ai_status
