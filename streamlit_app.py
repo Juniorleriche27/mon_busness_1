@@ -1112,7 +1112,7 @@ if mode == "B":
             if file_errors:
                 st.warning("Fichiers ignores (trop volumineux): " + ", ".join(file_errors))
 
-            doc = {{
+            doc = {
                 "company_name": (company_name or "").strip(),
                 "sector": (sector or "").strip(),
                 "country": (country_b or "").strip(),
@@ -1134,7 +1134,7 @@ if mode == "B":
                 "lead_status": "new",
                 "source": "streamlit_site",
                 "created_at": datetime.now(timezone.utc),
-            }}
+            }
 
             res = None
             db_ok = False
