@@ -1160,10 +1160,10 @@ if mode == "B":
 
             if not email_ok:
                 if db_ok:
-                    leads.update_one({{"_id": res.inserted_id}}, {{"$set": {{"email_status": "failed", "email_error": email_error}}}})
+                    leads.update_one({"_id": res.inserted_id}, {"$set": {"email_status": "failed", "email_error": email_error}})
             else:
                 if db_ok:
-                    leads.update_one({{"_id": res.inserted_id}}, {{"$set": {{"email_status": "sent"}}}})
+                    leads.update_one({"_id": res.inserted_id}, {"$set": {"email_status": "sent"}})
 
             if not db_ok:
                 st.stop()
