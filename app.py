@@ -1144,40 +1144,40 @@ if mode == "B":
             except Exception:
                 db_ok = False
 
-            ref_id = str(res.inserted_id) if res else "email-only"
-            email_ok, email_error = _send_lead_email(doc, ref_id)
+                ref_id = str(res.inserted_id) if res else "email-only"
+        email_ok, email_error = _send_lead_email(doc, ref_id)
 
-            if db_ok:
-                st.success(f"Demande entreprise recue. Reference: {{res.inserted_id}}")
-                st.info("Demande entreprise recue. Reponse rapide apres analyse des elements.")
+        if db_ok:
+            st.success("Demande entreprise recue. Merci.")
+            st.info("Reponse rapide apres analyse des elements.")
+        else:
+            if email_ok:
+                st.success("Demande entreprise recue.")
+                st.info("Base temporairement indisponible. Votre demande a ete envoyee par email.")
             else:
-                if email_ok:
-                    st.success("Demande entreprise recue.")
-                    st.info("Base temporairement indisponible. Votre demande a ete envoyee par email.")
-                else:
-                    st.error("Le service est temporairement indisponible. Merci de reessayer plus tard.")
-                    st.stop()
-
-            if not email_ok:
-                if db_ok:
-                    leads.update_one({"_id": res.inserted_id}, {"$set": {"email_status": "failed", "email_error": email_error}})
-            else:
-                if db_ok:
-                    leads.update_one({"_id": res.inserted_id}, {"$set": {"email_status": "sent"}})
-
-            if not db_ok:
+                st.error("Le service est temporairement indisponible. Merci de reessayer plus tard.")
                 st.stop()
 
-            if stored_files:
-                st.info("Fichiers recus: " + ", ".join(f"{{f['name']}} ({{_format_mb(f.get('size', 0))}})" for f in stored_files))
+        if not email_ok:
+            if db_ok:
+                leads.update_one({"_id": res.inserted_id}, {"$set": {"email_status": "failed", "email_error": email_error}})
+        else:
+            if db_ok:
+                leads.update_one({"_id": res.inserted_id}, {"$set": {"email_status": "sent"}})
 
-            st.session_state["last_lead_id"] = str(res.inserted_id) if res else ""
-            for key in FORM_B_KEYS:
-                st.session_state[key] = ""
-            if "b_logo" in st.session_state:
-                st.session_state.pop("b_logo")
-            if "b_photos" in st.session_state:
-                st.session_state.pop("b_photos")
+        if not db_ok:
+            st.stop()
+
+        if stored_files:
+            st.info("Fichiers recus: " + ", ".join(f"{f['name']} ({_format_mb(f.get('size', 0))})" for f in stored_files))
+
+        st.session_state["last_lead_id"] = str(res.inserted_id) if res else ""
+        for key in FORM_B_KEYS:
+            st.session_state[key] = ""
+        if "b_logo" in st.session_state:
+            st.session_state.pop("b_logo")
+        if "b_photos" in st.session_state:
+            st.session_state.pop("b_photos")
 
         st.stop()
 
