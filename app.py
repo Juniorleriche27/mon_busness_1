@@ -1058,7 +1058,7 @@ if mode == "B":
 
             services_list = _split_items(services_products)
 
-            st.session_state.update({{
+            st.session_state.update({
                 "company_name": company_name,
                 "sector": sector,
                 "country_b": country_b,
@@ -1075,7 +1075,7 @@ if mode == "B":
                 "deadline_b": deadline_b,
                 "hosting_plan_b": hosting_plan_b,
                 "consent_b": consent_b,
-            }})
+            })
 
             stored_files = []
             file_errors = []
