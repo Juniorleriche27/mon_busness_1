@@ -2,3 +2,4 @@ fastapi==0.115.5
 uvicorn[standard]==0.30.6
 pydantic==2.9.2
 pymongo[srv]==4.8.0
+cohere==5.10.0
