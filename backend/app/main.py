@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pymongo import MongoClient
 import cohere
 
-app = FastAPI(title="Portfolio API", version="0.3.0")
+app = FastAPI(title="Portfolio API", version="0.4.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -19,16 +19,15 @@ app.add_middleware(
 )
 
 
-def _get_collection():
+def _get_collection(name: str):
     mongo_uri = os.environ.get("MONGO_URI")
     mongo_db = os.environ.get("MONGO_DB", "portfolio")
-    mongo_collection = os.environ.get("MONGO_COLLECTION", "leads")
 
     if not mongo_uri:
         raise RuntimeError("MONGO_URI is not set")
 
     client = MongoClient(mongo_uri, serverSelectionTimeoutMS=8000)
-    return client[mongo_db][mongo_collection]
+    return client[mongo_db][name]
 
 
 def _send_email(subject: str, body: str) -> str:
@@ -64,7 +63,7 @@ def health():
 @app.post("/leads")
 def create_lead(payload: dict):
     try:
-        collection = _get_collection()
+        collection = _get_collection(os.environ.get("MONGO_COLLECTION", "leads"))
         doc = {
             "mode": payload.get("mode"),
             "data": payload.get("data", payload),
@@ -94,6 +93,7 @@ def chat(payload: dict):
     if not api_key:
         raise HTTPException(status_code=501, detail="cohere_not_configured")
 
+    session_id = payload.get("session_id") or "session_unknown"
     user_msg = (payload.get("message") or "").strip()
     if not user_msg:
         return {"reply": "Bonjour ! Comment puis-je vous aider ?"}
@@ -101,7 +101,8 @@ def chat(payload: dict):
     system = (
         "Tu es un assistant commercial. Tu reponds uniquement aux questions sur nos services "
         "(portfolio candidat, vitrine entreprise, CV, lettre de motivation) et les formules de politesse. "
-        "Si la question est hors sujet, reponds poliment que tu ne peux aider que sur nos services."
+        "Si la question est hors sujet, reponds poliment que tu ne peux aider que sur nos services. "
+        "Donne aussi le WhatsApp +22892092572 quand l'utilisateur veut plus d'infos."
     )
 
     co = cohere.ClientV2(api_key)
@@ -113,4 +114,29 @@ def chat(payload: dict):
         ],
     )
 
-    return {"reply": resp.message.content[0].text}
+    reply = resp.message.content[0].text
+
+    chats = _get_collection(os.environ.get("MONGO_CHAT_COLLECTION", "chat_logs"))
+    chats.update_one(
+        {"session_id": session_id},
+        {
+            "$setOnInsert": {"created_at": datetime.now(timezone.utc).isoformat()},
+            "$push": {
+                "messages": {
+                    "at": datetime.now(timezone.utc).isoformat(),
+                    "user": user_msg,
+                    "assistant": reply,
+                }
+            },
+        },
+        upsert=True,
+    )
+
+    _send_email(
+        f"Chat assistant - {session_id}",
+        f"User: {user_msg}
+
+Assistant: {reply}",
+    )
+
+    return {"reply": reply}
