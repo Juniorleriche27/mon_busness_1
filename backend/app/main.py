@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pymongo import MongoClient
 import cohere
 
-app = FastAPI(title="Portfolio API", version="0.6.0")
+app = FastAPI(title="Portfolio API", version="0.7.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -302,8 +302,42 @@ def chat(payload: dict):
     session_id = payload.get("session_id") or "session_unknown"
     user_msg = (payload.get("message") or "").strip()
 
-    # Force rule-based replies to keep answers consistent and on-topic
-    reply = _safe_reply(user_msg)
+    if not user_msg:
+        reply = _safe_reply("")
+    else:
+        reply = ""
+        if api_key:
+            system = (
+                "Tu es un assistant commercial. Tu aides uniquement sur nos services: "
+                "portfolio candidat, vitrine entreprise, CV, lettre de motivation. "
+                "Reponds en francais, court, clair, utile. "
+                "Si l utilisateur demande comment ca marche, donne 3-4 etapes. "
+                "Si l utilisateur demande les prix, donne les prix CFA + USD et l hebergement. "
+                "Pose une question simple pour avancer. "
+                "Ajoute toujours le WhatsApp +22892092572."
+            )
+            co = cohere.ClientV2(api_key)
+            resp = co.chat(
+                model=model,
+                messages=[
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": user_msg},
+                ],
+            )
+            reply = resp.message.content[0].text or ""
+
+        if not reply:
+            reply = _safe_reply(user_msg)
+
+        if ("comment" in user_msg.lower() or "marche" in user_msg.lower()) and "1)" not in reply:
+            reply = _how_it_works() + _assistant_footer()
+
+        if any(k in user_msg.lower() for k in ["prix", "tarif", "cout", "co?t"]) and "CFA" not in reply:
+            reply = "Voici nos tarifs :
+" + _price_text() + _assistant_footer()
+
+        if "WhatsApp" not in reply:
+            reply = reply + _assistant_footer()
 
     chats = _get_collection(os.environ.get("MONGO_CHAT_COLLECTION", "chat_logs"))
     chats.update_one(
