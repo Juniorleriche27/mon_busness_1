@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pymongo import MongoClient
 import cohere
 
-app = FastAPI(title="Portfolio API", version="0.4.0")
+app = FastAPI(title="Portfolio API", version="0.5.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -17,6 +17,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+RATE = 600
+PRICES = {
+    "portfolio": 29900,
+    "vitrine_min": 59900,
+    "cv": 9900,
+    "lm": 4900,
+    "host_month": 2000,
+    "host_year": 24000,
+}
+
+
+def _usd(value: int) -> str:
+    return f"{value / RATE:.2f}"
 
 
 def _get_collection(name: str):
@@ -55,6 +69,72 @@ def _send_email(subject: str, body: str) -> str:
     return "sent"
 
 
+def _assistant_footer():
+    return "
+
+WhatsApp: +22892092572"
+
+
+def _price_text():
+    return (
+        f"- Portfolio candidat: {PRICES['portfolio']} CFA (~${_usd(PRICES['portfolio'])})
+"
+        f"- Vitrine entreprise: a partir de {PRICES['vitrine_min']} CFA (~${_usd(PRICES['vitrine_min'])})
+"
+        f"- CV: {PRICES['cv']} CFA (~${_usd(PRICES['cv'])})
+"
+        f"- Lettre de motivation: {PRICES['lm']} CFA (~${_usd(PRICES['lm'])})
+"
+        f"- Hebergement: {PRICES['host_month']} CFA/mois (~${_usd(PRICES['host_month'])})
+"
+        f"  ou {PRICES['host_year']} CFA/an (~${_usd(PRICES['host_year'])})"
+    )
+
+
+def _how_it_works():
+    return (
+        "Comment ca marche :
+"
+        "1) Choisissez le service (Portfolio, Vitrine, CV, Lettre).
+"
+        "2) Remplissez le formulaire (meme partiel).
+"
+        "3) Nous analysons et vous contactons pour completer.
+"
+        "4) Livraison apres validation."
+    )
+
+
+def _safe_reply(message: str) -> str:
+    msg = message.lower().strip()
+    if not msg:
+        return "Bonjour ! Comment puis-je vous aider ?" + _assistant_footer()
+
+    if any(k in msg for k in ["prix", "tarif", "cout", "co?t"]):
+        return "Voici nos tarifs :
+" + _price_text() + _assistant_footer()
+
+    if "comment" in msg or "marche" in msg or "process" in msg:
+        return _how_it_works() + _assistant_footer()
+
+    if any(k in msg for k in ["cv", "curriculum", "lettre", "motivation"]):
+        return (
+            "Nous proposons aussi : CV professionnel et Lettre de motivation. "
+            "Dites-nous ce que vous voulez et on vous envoie le brief."
+        ) + _assistant_footer()
+
+    if any(k in msg for k in ["portfolio", "vitrine", "site", "entreprise"]):
+        return (
+            "Nous faisons des portfolios candidats et des vitrines entreprises. "
+            "Quel service voulez-vous ?"
+        ) + _assistant_footer()
+
+    return (
+        "Je peux repondre uniquement sur nos services (portfolio, vitrine, CV, lettre) "
+        "et les formules de politesse."
+    ) + _assistant_footer()
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
@@ -90,31 +170,33 @@ Mode: {payload.get('mode')}
 def chat(payload: dict):
     api_key = os.environ.get("COHERE_API_KEY")
     model = os.environ.get("COHERE_MODEL", "command-a-03-2025")
-    if not api_key:
-        raise HTTPException(status_code=501, detail="cohere_not_configured")
 
     session_id = payload.get("session_id") or "session_unknown"
     user_msg = (payload.get("message") or "").strip()
-    if not user_msg:
-        return {"reply": "Bonjour ! Comment puis-je vous aider ?"}
 
-    system = (
-        "Tu es un assistant commercial. Tu reponds uniquement aux questions sur nos services "
-        "(portfolio candidat, vitrine entreprise, CV, lettre de motivation) et les formules de politesse. "
-        "Si la question est hors sujet, reponds poliment que tu ne peux aider que sur nos services. "
-        "Donne aussi le WhatsApp +22892092572 quand l'utilisateur veut plus d'infos."
-    )
+    # Rule-based short answers for common questions
+    quick = _safe_reply(user_msg)
 
-    co = cohere.ClientV2(api_key)
-    resp = co.chat(
-        model=model,
-        messages=[
-            {"role": "system", "content": system},
-            {"role": "user", "content": user_msg},
-        ],
-    )
+    if not api_key:
+        reply = quick
+    else:
+        system = (
+            "Tu es un assistant commercial. Tu reponds uniquement aux questions sur nos services "
+            "(portfolio candidat, vitrine entreprise, CV, lettre de motivation) et les formules de politesse. "
+            "Reponses tres courtes, claires, utiles. Ajoute toujours le WhatsApp +22892092572."
+        )
 
-    reply = resp.message.content[0].text
+        co = cohere.ClientV2(api_key)
+        resp = co.chat(
+            model=model,
+            messages=[
+                {"role": "system", "content": system},
+                {"role": "user", "content": user_msg},
+            ],
+        )
+        reply = resp.message.content[0].text
+        if "WhatsApp" not in reply:
+            reply = reply + _assistant_footer()
 
     chats = _get_collection(os.environ.get("MONGO_CHAT_COLLECTION", "chat_logs"))
     chats.update_one(
