@@ -302,28 +302,8 @@ def chat(payload: dict):
     session_id = payload.get("session_id") or "session_unknown"
     user_msg = (payload.get("message") or "").strip()
 
-    quick = _safe_reply(user_msg)
-
-    if not api_key:
-        reply = quick
-    else:
-        system = (
-            "Tu es un assistant commercial. Tu reponds uniquement aux questions sur nos services "
-            "(portfolio candidat, vitrine entreprise, CV, lettre de motivation) et les formules de politesse. "
-            "Reponses tres courtes, claires, utiles. Ajoute toujours le WhatsApp +22892092572."
-        )
-
-        co = cohere.ClientV2(api_key)
-        resp = co.chat(
-            model=model,
-            messages=[
-                {"role": "system", "content": system},
-                {"role": "user", "content": user_msg},
-            ],
-        )
-        reply = resp.message.content[0].text
-        if "WhatsApp" not in reply:
-            reply = reply + _assistant_footer()
+    # Force rule-based replies to keep answers consistent and on-topic
+    reply = _safe_reply(user_msg)
 
     chats = _get_collection(os.environ.get("MONGO_CHAT_COLLECTION", "chat_logs"))
     chats.update_one(
