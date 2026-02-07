@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pymongo import MongoClient
 import cohere
 
-app = FastAPI(title="Portfolio API", version="0.5.0")
+app = FastAPI(title="Portfolio API", version="0.6.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -26,6 +26,106 @@ PRICES = {
     "lm": 4900,
     "host_month": 2000,
     "host_year": 24000,
+}
+
+REQUIRED_FIELDS = {
+    "A": [
+        "full_name",
+        "email",
+        "phone",
+        "country",
+        "city",
+        "target_role",
+        "experience_level",
+        "projects",
+        "skills",
+        "bio",
+        "achievements",
+        "tools",
+        "education",
+        "assets_links",
+        "hosting_option",
+        "deadline",
+        "consent",
+    ],
+    "B": [
+        "company_name",
+        "sector",
+        "country",
+        "city",
+        "email",
+        "phone",
+        "services",
+        "target_clients",
+        "goals",
+        "value_prop",
+        "pages",
+        "budget",
+        "deadline",
+        "branding",
+        "assets_links",
+        "hosting_option",
+        "consent",
+    ],
+    "CV": [
+        "full_name",
+        "email",
+        "phone",
+        "target_role",
+        "country",
+        "experience",
+        "education",
+        "skills",
+        "achievements",
+        "assets_links",
+        "deadline",
+        "consent",
+    ],
+    "LM": [
+        "full_name",
+        "email",
+        "phone",
+        "target_role",
+        "company_name",
+        "job_link",
+        "motivation",
+        "experience",
+        "achievements",
+        "deadline",
+        "consent",
+    ],
+}
+
+FIELD_LABELS = {
+    "full_name": "Nom complet",
+    "email": "Email",
+    "phone": "WhatsApp/Telephone",
+    "country": "Pays",
+    "city": "Ville",
+    "target_role": "Poste vise",
+    "experience_level": "Niveau d'experience",
+    "projects": "Projets (liens + details)",
+    "skills": "Competences",
+    "bio": "Mini bio",
+    "achievements": "Realisations",
+    "tools": "Outils",
+    "education": "Formation",
+    "assets_links": "Liens documents (CV/Drive)",
+    "hosting_option": "Hebergement",
+    "deadline": "Delai souhaite",
+    "company_name": "Nom entreprise",
+    "sector": "Activite / secteur",
+    "services": "Services / produits",
+    "target_clients": "Clients cibles",
+    "goals": "Objectif du site",
+    "value_prop": "Proposition de valeur",
+    "pages": "Pages souhaitees",
+    "budget": "Budget estime",
+    "branding": "Logo/charte (lien)",
+    "experience": "Experience pertinente",
+    "job_link": "Lien offre / description",
+    "motivation": "Motivation",
+    "consent": "Consentement",
 }
 
 
@@ -135,6 +235,19 @@ def _safe_reply(message: str) -> str:
     ) + _assistant_footer()
 
 
+def _missing_questions(mode: str, data: dict):
+    required = REQUIRED_FIELDS.get(mode, [])
+    missing = []
+    for key in required:
+        value = data.get(key)
+        if value is None:
+            missing.append(key)
+        elif isinstance(value, str) and not value.strip():
+            missing.append(key)
+    questions = [f"Merci de preciser: {FIELD_LABELS.get(k, k)}" for k in missing]
+    return missing, questions
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
@@ -144,24 +257,39 @@ def health():
 def create_lead(payload: dict):
     try:
         collection = _get_collection(os.environ.get("MONGO_COLLECTION", "leads"))
+        mode = payload.get("mode")
+        data = payload.get("data", payload)
+
+        missing, questions = _missing_questions(mode, data)
+
         doc = {
-            "mode": payload.get("mode"),
-            "data": payload.get("data", payload),
+            "mode": mode,
+            "data": data,
             "created_at": datetime.now(timezone.utc).isoformat(),
             "status": "new",
+            "missing_fields": missing,
+            "missing_questions": questions,
         }
         res = collection.insert_one(doc)
         ref = str(res.inserted_id)
 
-        subject = f"Nouveau lead {payload.get('mode', '')} - {ref}"
-        body = f"Reference: {ref}
-Mode: {payload.get('mode')}
+        subject = f"Nouveau lead {mode} - {ref}"
+        body = (
+            f"Reference: {ref}
+Mode: {mode}
 
-{doc['data']}"
+{data}
+
+"
+            f"Questions utiles: {questions}" if questions else f"Reference: {ref}
+Mode: {mode}
+
+{data}"
+        )
         email_status = _send_email(subject, body)
         collection.update_one({"_id": res.inserted_id}, {"$set": {"email_status": email_status}})
 
-        return {"status": "ok", "id": ref}
+        return {"status": "ok", "id": ref, "missing_questions": questions}
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"insert_failed: {exc}")
 
@@ -174,7 +302,6 @@ def chat(payload: dict):
     session_id = payload.get("session_id") or "session_unknown"
     user_msg = (payload.get("message") or "").strip()
 
-    # Rule-based short answers for common questions
     quick = _safe_reply(user_msg)
 
     if not api_key:
