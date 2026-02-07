@@ -150,7 +150,7 @@ def _send_email(subject: str, body: str) -> str:
     username = os.environ.get("SMTP_USERNAME")
     password = os.environ.get("SMTP_PASSWORD")
     from_email = os.environ.get("SMTP_FROM", username)
-    to_email = os.environ.get("SMTP_TO")
+    to_email = os.environ.get("SMTP_TO", username)
 
     if not (host and username and password and to_email):
         return "skipped"
@@ -161,12 +161,14 @@ def _send_email(subject: str, body: str) -> str:
     msg["To"] = to_email
     msg.set_content(body)
 
-    with smtplib.SMTP(host, port) as server:
-        server.starttls()
-        server.login(username, password)
-        server.send_message(msg)
-
-    return "sent"
+    try:
+        with smtplib.SMTP(host, port) as server:
+            server.starttls()
+            server.login(username, password)
+            server.send_message(msg)
+        return "sent"
+    except Exception as exc:
+        return f"failed: {exc}"
 
 
 def _assistant_footer():
