@@ -170,37 +170,26 @@ def _send_email(subject: str, body: str) -> str:
 
 
 def _assistant_footer():
-    return "
-
-WhatsApp: +22892092572"
+    return "\n\nWhatsApp: +22892092572"
 
 
 def _price_text():
     return (
-        f"- Portfolio candidat: {PRICES['portfolio']} CFA (~${_usd(PRICES['portfolio'])})
-"
-        f"- Vitrine entreprise: a partir de {PRICES['vitrine_min']} CFA (~${_usd(PRICES['vitrine_min'])})
-"
-        f"- CV: {PRICES['cv']} CFA (~${_usd(PRICES['cv'])})
-"
-        f"- Lettre de motivation: {PRICES['lm']} CFA (~${_usd(PRICES['lm'])})
-"
-        f"- Hebergement: {PRICES['host_month']} CFA/mois (~${_usd(PRICES['host_month'])})
-"
+        f"- Portfolio candidat: {PRICES['portfolio']} CFA (~${_usd(PRICES['portfolio'])})\n"
+        f"- Vitrine entreprise: a partir de {PRICES['vitrine_min']} CFA (~${_usd(PRICES['vitrine_min'])})\n"
+        f"- CV: {PRICES['cv']} CFA (~${_usd(PRICES['cv'])})\n"
+        f"- Lettre de motivation: {PRICES['lm']} CFA (~${_usd(PRICES['lm'])})\n"
+        f"- Hebergement: {PRICES['host_month']} CFA/mois (~${_usd(PRICES['host_month'])})\n"
         f"  ou {PRICES['host_year']} CFA/an (~${_usd(PRICES['host_year'])})"
     )
 
 
 def _how_it_works():
     return (
-        "Comment ca marche :
-"
-        "1) Choisissez le service (Portfolio, Vitrine, CV, Lettre).
-"
-        "2) Remplissez le formulaire (meme partiel).
-"
-        "3) Nous analysons et vous contactons pour completer.
-"
+        "Comment ca marche :\n"
+        "1) Choisissez le service (Portfolio, Vitrine, CV, Lettre).\n"
+        "2) Remplissez le formulaire (meme partiel).\n"
+        "3) Nous analysons et vous contactons pour completer.\n"
         "4) Livraison apres validation."
     )
 
@@ -211,8 +200,7 @@ def _safe_reply(message: str) -> str:
         return "Bonjour ! Comment puis-je vous aider ?" + _assistant_footer()
 
     if any(k in msg for k in ["prix", "tarif", "cout", "co?t"]):
-        return "Voici nos tarifs :
-" + _price_text() + _assistant_footer()
+        return "Voici nos tarifs :\n" + _price_text() + _assistant_footer()
 
     if "comment" in msg or "marche" in msg or "process" in msg:
         return _how_it_works() + _assistant_footer()
@@ -274,18 +262,11 @@ def create_lead(payload: dict):
         ref = str(res.inserted_id)
 
         subject = f"Nouveau lead {mode} - {ref}"
-        body = (
-            f"Reference: {ref}
-Mode: {mode}
-
-{data}
-
-"
-            f"Questions utiles: {questions}" if questions else f"Reference: {ref}
-Mode: {mode}
-
-{data}"
-        )
+        base_body = f"Reference: {ref}\nMode: {mode}\n\n{data}"
+        if questions:
+            body = base_body + f"\n\nQuestions utiles: {questions}"
+        else:
+            body = base_body
         email_status = _send_email(subject, body)
         collection.update_one({"_id": res.inserted_id}, {"$set": {"email_status": email_status}})
 
@@ -333,8 +314,7 @@ def chat(payload: dict):
             reply = _how_it_works() + _assistant_footer()
 
         if any(k in user_msg.lower() for k in ["prix", "tarif", "cout", "co?t"]) and "CFA" not in reply:
-            reply = "Voici nos tarifs :
-" + _price_text() + _assistant_footer()
+            reply = "Voici nos tarifs :\n" + _price_text() + _assistant_footer()
 
         if "WhatsApp" not in reply:
             reply = reply + _assistant_footer()
@@ -357,9 +337,7 @@ def chat(payload: dict):
 
     _send_email(
         f"Chat assistant - {session_id}",
-        f"User: {user_msg}
-
-Assistant: {reply}",
+        f"User: {user_msg}\n\nAssistant: {reply}",
     )
 
     return {"reply": reply}
