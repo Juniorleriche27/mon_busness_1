@@ -272,7 +272,7 @@ def create_lead(payload: dict):
         email_status = _send_email(subject, body)
         collection.update_one({"_id": res.inserted_id}, {"$set": {"email_status": email_status}})
 
-        return {"status": "ok", "id": ref, "missing_questions": questions}
+        return {"status": "ok", "id": ref, "missing_questions": questions, "email_status": email_status}
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"insert_failed: {exc}")
 
