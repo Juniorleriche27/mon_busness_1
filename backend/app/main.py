@@ -285,13 +285,13 @@ def _safe_reply(message: str) -> str:
     msg = message.lower().strip()
     if not msg:
         return (
-            "Bonjour. Je peux vous aider sur nos services Candidature, Web et Data "
+            "Bonjour et bienvenue. Je peux vous aider sur nos services Candidature, Web et Data "
             "(Portfolio, Vitrine, CV, Lettre, LinkedIn, Audit, Landing page, Google Business, Dashboard, Base)."
         ) + _assistant_footer()
 
     if any(k in msg for k in ["prix", "tarif", "cout", "co?t"]):
         return (
-            "Voici nos tarifs officiels:\n"
+            "Merci pour votre question. Voici nos tarifs officiels:\n"
             + _price_text()
             + "\n\nSouhaitez-vous commander un seul service ou un pack combine ?"
             + _assistant_footer()
@@ -306,7 +306,7 @@ def _safe_reply(message: str) -> str:
 
     if any(k in msg for k in ["bonjour", "salut", "bonsoir", "hello"]):
         return (
-            "Bonjour. Dites-moi votre besoin principal: Portfolio, Vitrine, CV, Lettre, LinkedIn, Audit, Landing page, Google Business, Dashboard, Base."
+            "Bonjour. Merci de votre message. Dites-moi votre besoin principal: Portfolio, Vitrine, CV, Lettre, LinkedIn, Audit, Landing page, Google Business, Dashboard, Base."
         ) + _assistant_footer()
 
     if any(k in msg for k in ["whatsapp", "what's app", "contact", "numero"]):
@@ -379,9 +379,9 @@ def _safe_reply(message: str) -> str:
         ) + _assistant_footer()
 
     return (
-        "Je peux repondre sur nos services (Portfolio, Vitrine, CV, Lettre, LinkedIn, Audit, Landing page, "
-        "Google Business, Dashboard, Formulaire+Base). Dites par exemple: 'prix', 'comment ca marche', "
-        "'je veux un CV' ou 'je veux un dashboard'."
+        "Merci pour votre message. Je suis desole, je reponds uniquement aux questions liees a nos services "
+        "(Portfolio, Vitrine, CV, Lettre, LinkedIn, Audit, Landing page, Google Business, Dashboard, Formulaire+Base). "
+        "Vous pouvez me demander par exemple: 'prix', 'comment ca marche', 'je veux un CV' ou 'je veux un dashboard'."
     ) + _assistant_footer()
 
 
@@ -478,9 +478,11 @@ def chat(payload: dict):
                 "portfolio candidat, vitrine entreprise, CV, lettre de motivation, optimisation LinkedIn, "
                 "audit CV/lettre, landing page, Google Business Profile, dashboard simple, formulaire + base. "
                 "Reponds en francais, court, clair, utile et concret. "
+                "Sois toujours poli et professionnel. "
                 "Si l utilisateur demande comment ca marche, donne 3-4 etapes. "
                 "Si l utilisateur demande les prix, donne les prix CFA + USD et l hebergement. "
                 "Si la demande est vague, pose UNE question de qualification. "
+                "Si la question est hors de nos services, refuse poliment et recentre vers nos services. "
                 "N invente jamais de service hors la liste ci-dessus. "
                 "Ajoute toujours a la fin: WhatsApp: +22892092572."
             )
