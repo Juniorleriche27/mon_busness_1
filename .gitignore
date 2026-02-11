@@ -3,6 +3,8 @@
 
 # Python
 __pycache__/
+.vscode/
+*.code-workspace
 *.pyc
 
 # Env
