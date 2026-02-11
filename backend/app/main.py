@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pymongo import MongoClient
 import cohere
 
-app = FastAPI(title="Portfolio API", version="0.7.0")
+app = FastAPI(title="Portfolio API", version="0.8.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -30,103 +30,170 @@ PRICES = {
 
 DEFAULT_NOTIFY_EMAIL = "senirolamadokou@gmail.com"
 
+COMMON_REQUIRED = ["full_name", "phone", "country", "city", "deadline", "consent"]
+
 REQUIRED_FIELDS = {
-    "A": [
-        "full_name",
-        "email",
-        "phone",
-        "country",
-        "city",
-        "target_role",
-        "experience_level",
-        "projects",
-        "skills",
-        "bio",
-        "achievements",
-        "tools",
-        "education",
-        "assets_links",
-        "hosting_option",
-        "deadline",
-        "consent",
+    "portfolio": COMMON_REQUIRED
+    + [
+        "objectif",
+        "metier_vise",
+        "liens",
+        "projets",
+        "about",
+        "contacts",
+        "style",
     ],
-    "B": [
+    "vitrine": COMMON_REQUIRED
+    + [
         "company_name",
         "sector",
-        "country",
-        "city",
-        "email",
-        "phone",
-        "services",
-        "target_clients",
-        "goals",
-        "value_prop",
-        "pages",
-        "budget",
-        "deadline",
-        "branding",
-        "assets_links",
-        "hosting_option",
-        "consent",
+        "offre_principale",
+        "objectif",
+        "pages_souhaitees",
+        "hebergement",
     ],
-    "CV": [
-        "full_name",
-        "email",
-        "phone",
-        "target_role",
-        "country",
-        "experience",
-        "education",
-        "skills",
-        "achievements",
-        "assets_links",
-        "deadline",
-        "consent",
+    "cv": COMMON_REQUIRED
+    + [
+        "poste_vise",
+        "niveau",
+        "pays_secteur",
+        "cv_actuel",
+        "langue",
     ],
-    "LM": [
-        "full_name",
-        "email",
-        "phone",
-        "target_role",
-        "company_name",
-        "job_link",
-        "motivation",
-        "experience",
-        "achievements",
-        "deadline",
-        "consent",
+    "lettre": COMMON_REQUIRED
+    + [
+        "type",
+        "poste_formation",
+        "organisation",
+        "cv_actuel",
+        "points_cles",
+        "langue",
+    ],
+    "linkedin": COMMON_REQUIRED
+    + [
+        "profil_linkedin",
+        "metier_positionnement",
+        "cibles",
+        "competences",
+        "experiences",
+        "langue",
+    ],
+    "audit": COMMON_REQUIRED
+    + [
+        "type_audit",
+        "fichiers",
+        "poste_cible",
+        "attentes",
+    ],
+    "landing-page": COMMON_REQUIRED
+    + [
+        "nom_activite",
+        "offre_principale",
+        "public_cible",
+        "cta_principal",
+    ],
+    "google-business": COMMON_REQUIRED
+    + [
+        "nom_etablissement",
+        "adresse_zone",
+        "telephone",
+        "categorie",
+        "horaires",
+        "description_courte",
+        "acces_fiche",
+    ],
+    "dashboard": COMMON_REQUIRED
+    + [
+        "type_organisation",
+        "objectif_dashboard",
+        "source_donnees",
+        "lien_fichier",
+        "indicateurs",
+        "frequence",
+    ],
+    "formulaire-base": COMMON_REQUIRED
+    + [
+        "type_base",
+        "champs_indispensables",
+        "volume",
+        "canal_collecte",
+        "anti_doublons",
+        "export_excel",
+        "multi_users",
     ],
 }
 
 FIELD_LABELS = {
-    "full_name": "Nom complet",
+    "full_name": "Nom et prenom",
     "email": "Email",
     "phone": "WhatsApp/Telephone",
     "country": "Pays",
     "city": "Ville",
-    "target_role": "Poste vise",
-    "experience_level": "Niveau d'experience",
-    "projects": "Projets (liens + details)",
-    "skills": "Competences",
-    "bio": "Mini bio",
-    "achievements": "Realisations",
-    "tools": "Outils",
-    "education": "Formation",
-    "assets_links": "Liens documents (CV/Drive)",
-    "hosting_option": "Hebergement",
     "deadline": "Delai souhaite",
+    "budget_range": "Budget (plage)",
+    "message": "Message complementaire",
+    "objectif": "Objectif",
+    "metier_vise": "Metier vise",
+    "liens": "Liens a integrer",
+    "projets": "Projets",
+    "about": "Section a propos",
+    "contacts": "Contacts a afficher",
+    "style": "Style souhaite",
+    "photo": "Photo",
     "company_name": "Nom entreprise",
     "sector": "Activite / secteur",
-    "services": "Services / produits",
-    "target_clients": "Clients cibles",
-    "goals": "Objectif du site",
-    "value_prop": "Proposition de valeur",
-    "pages": "Pages souhaitees",
-    "budget": "Budget estime",
-    "branding": "Logo/charte (lien)",
-    "experience": "Experience pertinente",
-    "job_link": "Lien offre / description",
-    "motivation": "Motivation",
+    "offre_principale": "Offre principale",
+    "pages_souhaitees": "Pages souhaitees",
+    "preuves": "Preuves",
+    "logo_couleurs": "Logo + couleurs",
+    "domaine": "Domaine",
+    "hebergement": "Hebergement",
+    "poste_vise": "Poste vise",
+    "niveau": "Niveau",
+    "pays_secteur": "Pays/secteur cible",
+    "cv_actuel": "CV actuel",
+    "points_corriger": "Points a corriger",
+    "langue": "Langue",
+    "type": "Type",
+    "poste_formation": "Poste/formation cible",
+    "organisation": "Organisation/ecole",
+    "points_cles": "Points cles",
+    "profil_linkedin": "Lien LinkedIn",
+    "metier_positionnement": "Metier / positionnement",
+    "cibles": "Cibles",
+    "competences": "Competences",
+    "experiences": "Experiences cles",
+    "post_linkedin": "Post LinkedIn",
+    "type_audit": "Type audit",
+    "fichiers": "Fichiers",
+    "poste_cible": "Poste/formation cible",
+    "attentes": "Attentes",
+    "nom_activite": "Nom activite",
+    "public_cible": "Public cible",
+    "cta_principal": "CTA principal",
+    "nom_etablissement": "Nom de l etablissement",
+    "adresse_zone": "Adresse / zone",
+    "telephone": "Telephone",
+    "categorie": "Categorie principale",
+    "horaires": "Horaires",
+    "description_courte": "Description courte",
+    "lien_site": "Lien site",
+    "photos": "Photos disponibles",
+    "acces_fiche": "Acces a la fiche",
+    "type_organisation": "Type organisation",
+    "objectif_dashboard": "Objectif du dashboard",
+    "source_donnees": "Source des donnees",
+    "fichier": "Fichier",
+    "lien_fichier": "Lien fichier",
+    "indicateurs": "Indicateurs souhaites",
+    "frequence": "Frequence mise a jour",
+    "type_base": "Type de base",
+    "champs_indispensables": "Champs indispensables",
+    "volume": "Volume estime",
+    "canal_collecte": "Canal de collecte",
+    "anti_doublons": "Anti-doublons",
+    "export_excel": "Export Excel",
+    "multi_users": "Acces multi-utilisateurs",
     "consent": "Consentement",
 }
 
@@ -199,14 +266,15 @@ def _price_text():
         f"- CV: {PRICES['cv']} CFA (~${_usd(PRICES['cv'])})\n"
         f"- Lettre de motivation: {PRICES['lm']} CFA (~${_usd(PRICES['lm'])})\n"
         f"- Hebergement (portfolio/vitrine): {PRICES['host_month']} CFA/mois (~${_usd(PRICES['host_month'])})\n"
-        f"  ou {PRICES['host_year']} CFA/an (~${_usd(PRICES['host_year'])})"
+        f"  ou {PRICES['host_year']} CFA/an (~${_usd(PRICES['host_year'])})\n"
+        "- Autres services (LinkedIn, Audit, Landing page, Google Business, Dashboard, Formulaire+Base): sur devis."
     )
 
 
 def _how_it_works():
     return (
         "Comment ca marche :\n"
-        "1) Choisissez le service (Portfolio, Vitrine, CV, Lettre).\n"
+        "1) Choisissez le service adapte (Candidature, Web, Data).\n"
         "2) Remplissez le formulaire (meme partiel).\n"
         "3) Nous analysons et vous contactons pour completer.\n"
         "4) Livraison apres validation."
@@ -217,8 +285,8 @@ def _safe_reply(message: str) -> str:
     msg = message.lower().strip()
     if not msg:
         return (
-            "Bonjour. Je peux vous aider sur 4 services: Portfolio candidat, "
-            "Vitrine entreprise, CV professionnel et Lettre de motivation."
+            "Bonjour. Je peux vous aider sur nos services Candidature, Web et Data "
+            "(Portfolio, Vitrine, CV, Lettre, LinkedIn, Audit, Landing page, Google Business, Dashboard, Base)."
         ) + _assistant_footer()
 
     if any(k in msg for k in ["prix", "tarif", "cout", "co?t"]):
@@ -238,7 +306,7 @@ def _safe_reply(message: str) -> str:
 
     if any(k in msg for k in ["bonjour", "salut", "bonsoir", "hello"]):
         return (
-            "Bonjour. Dites-moi votre besoin principal: Portfolio, Vitrine, CV ou Lettre de motivation."
+            "Bonjour. Dites-moi votre besoin principal: Portfolio, Vitrine, CV, Lettre, LinkedIn, Audit, Landing page, Google Business, Dashboard, Base."
         ) + _assistant_footer()
 
     if any(k in msg for k in ["whatsapp", "what's app", "contact", "numero"]):
@@ -268,6 +336,42 @@ def _safe_reply(message: str) -> str:
             "Pas d hebergement. Remplissez le formulaire Lettre avec contexte et objectifs."
         ) + _assistant_footer()
 
+    if "linkedin" in msg:
+        return (
+            "Optimisation LinkedIn: profil, resume, experiences et positionnement. "
+            "Remplissez le formulaire LinkedIn avec votre lien et vos objectifs."
+        ) + _assistant_footer()
+
+    if "audit" in msg:
+        return (
+            "Audit CV / Lettre: analyse complete + corrections. "
+            "Envoyez vos fichiers via le formulaire Audit."
+        ) + _assistant_footer()
+
+    if "landing" in msg:
+        return (
+            "Landing page 1 page: offre, preuves, CTA. "
+            "Remplissez le formulaire Landing page avec votre offre principale."
+        ) + _assistant_footer()
+
+    if any(k in msg for k in ["google business", "google maps", "fiche google"]):
+        return (
+            "Google Business Profile: creation/optimisation de votre fiche Google Maps. "
+            "Remplissez le formulaire Google Business pour la categorie, horaires et description."
+        ) + _assistant_footer()
+
+    if "dashboard" in msg:
+        return (
+            "Dashboard simple ONG/PME: indicateurs, suivi et reporting. "
+            "Remplissez le formulaire Dashboard avec vos sources de donnees."
+        ) + _assistant_footer()
+
+    if "formulaire" in msg or "base" in msg:
+        return (
+            "Formulaire + Base structuree: collecte fiable + base propre. "
+            "Remplissez le formulaire Base avec vos champs et besoins d export."
+        ) + _assistant_footer()
+
     if any(k in msg for k in ["pack", "plusieurs", "combo"]):
         return (
             "Oui, vous pouvez combiner plusieurs services dans une seule demande. "
@@ -275,19 +379,30 @@ def _safe_reply(message: str) -> str:
         ) + _assistant_footer()
 
     return (
-        "Je peux repondre uniquement sur nos services (portfolio, vitrine, CV, lettre) "
-        "et les formules de politesse. Dites par exemple: 'prix', 'comment ca marche', 'je veux un CV'."
+        "Je peux repondre sur nos services (Portfolio, Vitrine, CV, Lettre, LinkedIn, Audit, Landing page, "
+        "Google Business, Dashboard, Formulaire+Base). Dites par exemple: 'prix', 'comment ca marche', "
+        "'je veux un CV' ou 'je veux un dashboard'."
     ) + _assistant_footer()
 
 
-def _missing_questions(mode: str, data: dict):
-    required = REQUIRED_FIELDS.get(mode, [])
+def _is_empty(value) -> bool:
+    if value is None:
+        return True
+    if isinstance(value, str) and not value.strip():
+        return True
+    if isinstance(value, list) and len(value) == 0:
+        return True
+    if isinstance(value, dict) and len(value) == 0:
+        return True
+    return False
+
+
+def _missing_questions(service_type: str, data: dict):
+    required = REQUIRED_FIELDS.get(service_type, [])
     missing = []
     for key in required:
         value = data.get(key)
-        if value is None:
-            missing.append(key)
-        elif isinstance(value, str) and not value.strip():
+        if _is_empty(value):
             missing.append(key)
     questions = [f"Merci de preciser: {FIELD_LABELS.get(k, k)}" for k in missing]
     return missing, questions
@@ -301,15 +416,28 @@ def health():
 @app.post("/leads")
 def create_lead(payload: dict):
     try:
-        collection = _get_collection(os.environ.get("MONGO_COLLECTION", "leads"))
-        mode = payload.get("mode")
+        collection = _get_collection(os.environ.get("MONGO_COLLECTION", "service_requests"))
+        legacy_mode = payload.get("mode")
         data = payload.get("data", payload)
 
-        missing, questions = _missing_questions(mode, data)
+        legacy_map = {"A": "portfolio", "B": "vitrine", "CV": "cv", "LM": "lettre"}
+        service_type = payload.get("service_type")
+        if not service_type and isinstance(legacy_mode, str):
+            service_type = legacy_map.get(legacy_mode.upper())
+        if not service_type:
+            service_type = legacy_mode or "unknown"
+
+        missing, questions = _missing_questions(service_type, data)
 
         doc = {
-            "mode": mode,
-            "data": data,
+            "service_type": service_type,
+            "name": data.get("full_name"),
+            "phone": data.get("phone") or data.get("telephone"),
+            "email": data.get("email"),
+            "country": data.get("country"),
+            "city": data.get("city"),
+            "deadline": data.get("deadline"),
+            "payload": data,
             "created_at": datetime.now(timezone.utc).isoformat(),
             "status": "new",
             "missing_fields": missing,
@@ -318,8 +446,8 @@ def create_lead(payload: dict):
         res = collection.insert_one(doc)
         ref = str(res.inserted_id)
 
-        subject = f"Nouveau lead {mode} - {ref}"
-        base_body = f"Reference: {ref}\nMode: {mode}\n\n{data}"
+        subject = f"Nouveau lead {service_type} - {ref}"
+        base_body = f"Reference: {ref}\nService: {service_type}\n\n{data}"
         if questions:
             body = base_body + f"\n\nQuestions utiles: {questions}"
         else:
@@ -347,12 +475,13 @@ def chat(payload: dict):
         if api_key:
             system = (
                 "Tu es un assistant commercial. Tu aides uniquement sur nos services: "
-                "portfolio candidat, vitrine entreprise, CV, lettre de motivation. "
+                "portfolio candidat, vitrine entreprise, CV, lettre de motivation, optimisation LinkedIn, "
+                "audit CV/lettre, landing page, Google Business Profile, dashboard simple, formulaire + base. "
                 "Reponds en francais, court, clair, utile et concret. "
                 "Si l utilisateur demande comment ca marche, donne 3-4 etapes. "
                 "Si l utilisateur demande les prix, donne les prix CFA + USD et l hebergement. "
                 "Si la demande est vague, pose UNE question de qualification. "
-                "N invente jamais de service hors Portfolio, Vitrine, CV, Lettre de motivation. "
+                "N invente jamais de service hors la liste ci-dessus. "
                 "Ajoute toujours a la fin: WhatsApp: +22892092572."
             )
             try:
@@ -374,8 +503,39 @@ def chat(payload: dict):
         reply_lower = reply.lower()
         msg_lower = user_msg.lower()
 
-        if any(k in msg_lower for k in ["portfolio", "vitrine", "cv", "lettre", "motivation"]) and not any(
-            k in reply_lower for k in ["portfolio", "vitrine", "cv", "lettre", "motivation"]
+        if any(
+            k in msg_lower
+            for k in [
+                "portfolio",
+                "vitrine",
+                "cv",
+                "lettre",
+                "motivation",
+                "linkedin",
+                "audit",
+                "landing",
+                "google business",
+                "google maps",
+                "dashboard",
+                "formulaire",
+                "base",
+            ]
+        ) and not any(
+            k in reply_lower
+            for k in [
+                "portfolio",
+                "vitrine",
+                "cv",
+                "lettre",
+                "motivation",
+                "linkedin",
+                "audit",
+                "landing",
+                "google business",
+                "dashboard",
+                "formulaire",
+                "base",
+            ]
         ):
             reply = _safe_reply(user_msg)
 
