@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 type Tab = "login" | "register";
 
-export default function AuthPage() {
+// ── Composant interne (utilise useSearchParams) ───────────
+
+function AuthPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
@@ -15,11 +17,9 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Login
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
 
-  // Register
   const [regName, setRegName] = useState("");
   const [regEmail, setRegEmail] = useState("");
   const [regPassword, setRegPassword] = useState("");
@@ -58,7 +58,6 @@ export default function AuthPage() {
         setLoading(false);
         return;
       }
-      // Auto-login après inscription
       await signIn("credentials", { email: regEmail, password: regPassword, redirect: false });
       router.push(callbackUrl);
     } catch {
@@ -132,7 +131,6 @@ export default function AuthPage() {
             ))}
           </div>
 
-          {/* Erreur */}
           {error && (
             <p className="text-sm text-center px-4 py-2 rounded-lg"
               style={{ background: "rgba(220,38,38,0.1)", color: "#f87171" }}>
@@ -140,7 +138,6 @@ export default function AuthPage() {
             </p>
           )}
 
-          {/* ── Connexion ── */}
           {tab === "login" && (
             <form onSubmit={handleLogin} className="space-y-4">
               <Field label="Email" type="email" value={loginEmail}
@@ -151,7 +148,6 @@ export default function AuthPage() {
             </form>
           )}
 
-          {/* ── Inscription ── */}
           {tab === "register" && (
             <form onSubmit={handleRegister} className="space-y-4">
               <Field label="Nom complet" type="text" value={regName}
@@ -169,14 +165,12 @@ export default function AuthPage() {
             </form>
           )}
 
-          {/* Séparateur */}
           <div className="flex items-center gap-4">
             <span className="flex-1 h-px" style={{ background: "var(--border)" }} />
             <span className="text-xs" style={{ color: "var(--text-dim)" }}>ou</span>
             <span className="flex-1 h-px" style={{ background: "var(--border)" }} />
           </div>
 
-          {/* Google OAuth */}
           <button
             onClick={() => signIn("google", { callbackUrl })}
             className="w-full flex items-center justify-center gap-3 py-3 rounded-lg border text-sm font-medium transition-opacity hover:opacity-80"
@@ -195,7 +189,21 @@ export default function AuthPage() {
   );
 }
 
-// ── Sous-composants locaux ────────────────────────────────
+// ── Export avec Suspense boundary ─────────────────────────
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--bg)" }}>
+        <span className="text-sm" style={{ color: "var(--text-muted)" }}>Chargement…</span>
+      </div>
+    }>
+      <AuthPageContent />
+    </Suspense>
+  );
+}
+
+// ── Sous-composants locaux ─────────────────────────────────
 
 function Field({ label, type, value, onChange, required, placeholder }: {
   label: string; type: string; value: string;
@@ -212,9 +220,9 @@ function Field({ label, type, value, onChange, required, placeholder }: {
         placeholder={placeholder}
         className="w-full px-4 py-2.5 rounded-lg border text-sm outline-none transition-colors focus:border-[var(--gold)]"
         style={{
-          background:   "var(--surface)",
-          borderColor:  "var(--border)",
-          color:        "var(--text)",
+          background:  "var(--surface)",
+          borderColor: "var(--border)",
+          color:       "var(--text)",
         }}
       />
     </div>
