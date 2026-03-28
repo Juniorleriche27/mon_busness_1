@@ -16,7 +16,6 @@ const nextConfig: NextConfig = {
     ],
   },
 
-  // Security headers
   async headers() {
     return [
       {
@@ -32,12 +31,8 @@ const nextConfig: NextConfig = {
     ];
   },
 
-  // Turbopack config (Next.js 16 — Turbopack enabled by default)
-  turbopack: {
-    resolveAlias: {
-      canvas: { browser: false },
-    },
-  },
+  // Empty turbopack config — required in Next.js 16 when no turbopack options are needed
+  turbopack: {},
 };
 
 export default nextConfig;
