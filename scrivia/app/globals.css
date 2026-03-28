@@ -2,6 +2,7 @@
 
 /* ─── Scrivia Design System ─────────────────────────────── */
 
+/* ── Mode nuit (défaut) ── */
 :root {
   --bg:          #07070f;
   --surface:     #0d0d1a;
@@ -12,6 +13,19 @@
   --text:        #f0ebe0;
   --text-muted:  #9e9a8e;
   --text-dim:    #6b6760;
+}
+
+/* ── Mode jour ── */
+[data-theme="light"] {
+  --bg:          #faf8f4;
+  --surface:     #ffffff;
+  --surface-2:   #f3efe8;
+  --border:      rgba(160, 130, 70, 0.2);
+  --gold:        #a07840;
+  --gold-light:  #c8a96e;
+  --text:        #1a1610;
+  --text-muted:  #6b5f4a;
+  --text-dim:    #9e9080;
 }
 
 @theme inline {
