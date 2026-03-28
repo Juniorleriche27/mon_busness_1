@@ -1,0 +1,1616 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scrivia — Documents professionnels par IA</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07070f;--surface:#0d0d1a;--card:#111120;--card2:#161628;
+  --gold:#c8a96e;--gold2:#e8c98a;--gold3:#f5dfa0;
+  --cream:#f0ebe0;--muted:#5a5a78;
+  --border:rgba(200,169,110,0.13);--border2:rgba(255,255,255,0.05);--border3:rgba(255,255,255,0.08);
+  --text:#eeeaf0;--text2:#8888aa;--text3:#555570;
+  --accent:#4f7fff;--green:#2ecc8a;--red:#ff5555;--orange:#f59e0b;
+  --r:12px;--r2:16px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden;min-height:100vh}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--gold);border-radius:3px}
+img{max-width:100%}
+a{text-decoration:none;color:inherit}
+button{font-family:'Outfit',sans-serif;cursor:pointer}
+input,textarea,select{font-family:'Outfit',sans-serif}
+
+/* ═══ PAGE SYSTEM ═══ */
+.page{display:none;animation:fadeIn 0.35s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ═══ NAV ═══ */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:999;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 2.5rem;height:68px;
+  background:rgba(7,7,15,0.9);
+  backdrop-filter:blur(24px);
+  border-bottom:1px solid var(--border2);
+}
+.logo{display:flex;align-items:center;gap:10px;cursor:pointer}
+.logo-mark{
+  width:34px;height:34px;border-radius:9px;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:700;color:#07070f;
+}
+.logo-text{font-family:'Cormorant Garamond',serif;font-size:1.45rem;font-weight:600;color:var(--cream);letter-spacing:0.02em}
+.nav-links{display:flex;gap:1.8rem;list-style:none}
+.nav-links a{color:var(--text2);font-size:14px;cursor:pointer;transition:color .2s}
+.nav-links a:hover,.nav-links a.active{color:var(--gold)}
+.nav-right{display:flex;gap:10px;align-items:center}
+.nav-user{display:none;align-items:center;gap:12px}
+.nav-user.show{display:flex}
+.nav-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold2));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#07070f;cursor:pointer}
+
+/* ═══ BUTTONS ═══ */
+.btn{border:none;border-radius:9px;padding:9px 20px;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:7px}
+.btn-ghost{background:none;border:1px solid var(--border);color:var(--cream)}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#07070f;font-weight:600}
+.btn-gold:hover{opacity:.88;transform:translateY(-1px)}
+.btn-outline{background:none;border:1px solid var(--border);color:var(--text2)}
+.btn-outline:hover{border-color:var(--gold);color:var(--gold)}
+.btn-green{background:rgba(46,204,138,.12);border:1px solid rgba(46,204,138,.25);color:var(--green)}
+.btn-green:hover{background:rgba(46,204,138,.2)}
+.btn-lg{padding:14px 32px;font-size:15px;border-radius:11px}
+.btn-full{width:100%;justify-content:center}
+
+/* ═══ FORMS ═══ */
+.form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:1rem}
+.form-label{font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.07em}
+.form-input{background:var(--surface);border:1px solid var(--border2);border-radius:9px;padding:11px 14px;color:var(--text);font-size:14px;outline:none;transition:border .2s;width:100%}
+.form-input:focus{border-color:var(--gold)}
+.form-input::placeholder{color:var(--text3)}
+textarea.form-input{resize:vertical;min-height:90px}
+select.form-input option{background:var(--card)}
+.form-grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.form-full{grid-column:1/-1}
+
+/* ═══ CARDS ═══ */
+.card{background:var(--card);border:1px solid var(--border2);border-radius:var(--r2)}
+.card-hover{transition:all .2s}
+.card-hover:hover{border-color:var(--border);transform:translateY(-2px)}
+
+/* ═══ BADGES ═══ */
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;letter-spacing:.04em}
+.badge-hot{background:rgba(255,84,80,.1);border:1px solid rgba(255,84,80,.2);color:#ff5450}
+.badge-pack{background:rgba(46,204,138,.1);border:1px solid rgba(46,204,138,.2);color:var(--green)}
+.badge-new{background:rgba(79,127,255,.1);border:1px solid rgba(79,127,255,.2);color:var(--accent)}
+.badge-gold{background:rgba(200,169,110,.1);border:1px solid rgba(200,169,110,.2);color:var(--gold)}
+
+/* ═══ SECTION ═══ */
+.section{padding:90px 2rem}
+.container{max-width:1180px;margin:0 auto}
+.section-tag{font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:.8rem;display:block}
+.section-title{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,4vw,3rem);font-weight:600;line-height:1.15;color:var(--cream);margin-bottom:.8rem}
+.section-sub{font-size:15px;color:var(--text2);max-width:500px;line-height:1.8}
+.section-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:2.5rem;flex-wrap:wrap;gap:1rem}
+
+/* ═══ DIVIDER ═══ */
+.divider{height:1px;background:var(--border2);margin:1.5rem 0}
+
+/* ═══ GRID HELPERS ═══ */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:1.2rem}
+.grid-auto{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1px}
+
+/* ═══════════════════════════════════════
+   PAGE 1 — HOME
+═══════════════════════════════════════ */
+.hero{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  text-align:center;padding:120px 2rem 80px;position:relative;overflow:hidden;
+}
+.hero-bg{
+  position:absolute;inset:0;z-index:0;
+  background:
+    radial-gradient(ellipse 90% 60% at 50% -10%,rgba(200,169,110,.09) 0%,transparent 70%),
+    radial-gradient(ellipse 50% 50% at 15% 80%,rgba(79,127,255,.05) 0%,transparent 60%),
+    radial-gradient(ellipse 40% 40% at 85% 60%,rgba(200,169,110,.04) 0%,transparent 60%);
+}
+.hero-grid{
+  position:absolute;inset:0;z-index:0;
+  background-image:linear-gradient(rgba(200,169,110,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(200,169,110,.035) 1px,transparent 1px);
+  background-size:55px 55px;
+  mask-image:radial-gradient(ellipse 90% 85% at 50% 50%,black 20%,transparent 100%);
+}
+.hero-inner{position:relative;z-index:1;max-width:820px;margin:0 auto}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(200,169,110,.08);border:1px solid rgba(200,169,110,.22);
+  border-radius:50px;padding:6px 16px;font-size:12px;color:var(--gold);
+  letter-spacing:.08em;text-transform:uppercase;margin-bottom:2rem;
+}
+.pulse{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.hero h1{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(3rem,7vw,5.8rem);font-weight:600;line-height:1.08;
+  margin-bottom:1.5rem;color:var(--cream);
+}
+.hero h1 em{
+  font-style:italic;
+  background:linear-gradient(135deg,var(--gold) 0%,var(--gold3) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.hero p{font-size:1.08rem;color:var(--text2);max-width:540px;margin:0 auto 2.5rem;line-height:1.85}
+.hero-actions{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-bottom:4rem}
+.hero-stats{display:flex;gap:3rem;justify-content:center;flex-wrap:wrap;padding-top:2.5rem;border-top:1px solid var(--border2)}
+.hero-stat-n{font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:700;color:var(--gold)}
+.hero-stat-l{font-size:12px;color:var(--text2);margin-top:2px}
+
+/* HOW */
+.how-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;margin-top:3.5rem;
+}
+.how-step{background:var(--card);padding:2.2rem 1.8rem;border-right:1px solid var(--border2)}
+.how-step:last-child{border-right:none}
+.how-num{font-family:'Cormorant Garamond',serif;font-size:2.8rem;font-weight:700;color:rgba(200,169,110,.12);line-height:1;margin-bottom:.8rem}
+.how-icon{width:40px;height:40px;border-radius:9px;background:rgba(200,169,110,.08);display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:1rem}
+.how-step h3{font-size:14px;font-weight:500;color:var(--cream);margin-bottom:.4rem}
+.how-step p{font-size:12px;color:var(--text2);line-height:1.7}
+
+/* FEATURED SERVICES */
+.feat-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  border:1px solid var(--border2);border-radius:var(--r2);overflow:hidden;
+}
+.feat-card{
+  background:var(--card);padding:1.8rem;
+  border-right:1px solid var(--border2);border-bottom:1px solid var(--border2);
+  cursor:pointer;transition:background .2s;
+}
+.feat-card:hover{background:var(--card2)}
+.feat-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px;margin-bottom:1rem}
+.feat-card h3{font-size:14px;font-weight:500;color:var(--cream);margin-bottom:.3rem}
+.feat-card p{font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:1rem}
+.feat-price{font-size:15px;font-weight:600;color:var(--gold)}
+.feat-eur{font-size:11px;color:var(--text3)}
+
+/* HOME PLANS PREVIEW */
+.plans-preview{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:3rem}
+.plan-mini{background:var(--card);border:1px solid var(--border2);border-radius:var(--r2);padding:2rem;transition:transform .2s}
+.plan-mini:hover{transform:translateY(-3px)}
+.plan-mini.feat{border-color:var(--gold)}
+.plan-mini-name{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;color:var(--cream);margin-bottom:.3rem}
+.plan-mini-price{font-size:1.8rem;font-weight:700;color:var(--gold);font-family:'Cormorant Garamond',serif}
+.plan-mini-period{font-size:13px;color:var(--text2)}
+.plan-mini-feat{font-size:12px;color:var(--text2);margin-top:.5rem}
+
+/* TRUST SECTION */
+.trust-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;margin-top:3rem}
+.trust-item{display:flex;gap:1rem;align-items:flex-start}
+.trust-icon{width:44px;height:44px;border-radius:10px;background:rgba(200,169,110,.07);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.trust-item h4{font-size:14px;font-weight:500;color:var(--cream);margin-bottom:.3rem}
+.trust-item p{font-size:12px;color:var(--text2);line-height:1.7}
+
+/* ═══════════════════════════════════════
+   PAGE 2 — SERVICES
+═══════════════════════════════════════ */
+.page-hero{padding:130px 2rem 60px;background:var(--surface);border-bottom:1px solid var(--border2)}
+.cat-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:2rem}
+.cat-tab{background:var(--card);border:1px solid var(--border2);color:var(--text2);padding:8px 18px;border-radius:50px;font-size:13px;cursor:pointer;transition:all .2s}
+.cat-tab:hover{border-color:var(--gold);color:var(--gold)}
+.cat-tab.active{background:var(--gold);border-color:var(--gold);color:#07070f;font-weight:600}
+.services-wrap{border:1px solid var(--border2);border-radius:var(--r2);overflow:hidden}
+.svc-card{
+  background:var(--card);padding:1.8rem 2rem;
+  border-bottom:1px solid var(--border2);border-right:1px solid var(--border2);
+  cursor:pointer;transition:background .2s;display:flex;flex-direction:column;
+}
+.svc-card:hover{background:var(--card2)}
+.svc-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:1rem;flex-shrink:0}
+.svc-card h3{font-size:15px;font-weight:500;color:var(--cream);margin-bottom:.4rem}
+.svc-card p{font-size:12px;color:var(--text2);line-height:1.65;flex:1;margin-bottom:1.2rem}
+.svc-footer{display:flex;align-items:center;justify-content:space-between}
+.svc-price-main{font-size:15px;font-weight:600;color:var(--gold)}
+.svc-price-sub{font-size:11px;color:var(--text3)}
+.svc-order-btn{
+  background:rgba(200,169,110,.1);border:1px solid rgba(200,169,110,.2);
+  color:var(--gold);font-size:12px;font-weight:500;padding:7px 14px;border-radius:7px;
+  cursor:pointer;transition:all .2s;white-space:nowrap;
+}
+.svc-order-btn:hover{background:var(--gold);color:#07070f}
+
+/* ═══════════════════════════════════════
+   PAGE 3 — PRICING
+═══════════════════════════════════════ */
+.pricing-toggle{display:flex;align-items:center;gap:12px;margin-bottom:3rem}
+.toggle-track{width:48px;height:26px;border-radius:13px;background:var(--card2);border:1px solid var(--border2);position:relative;cursor:pointer;transition:background .3s}
+.toggle-track.on{background:rgba(200,169,110,.3)}
+.toggle-thumb{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--text2);transition:all .3s}
+.toggle-track.on .toggle-thumb{left:25px;background:var(--gold)}
+.toggle-label{font-size:13px;color:var(--text2);cursor:pointer}
+.toggle-label.active{color:var(--cream);font-weight:500}
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-bottom:3rem}
+.pricing-card{background:var(--card);border:1px solid var(--border2);border-radius:var(--r2);padding:2.5rem 2rem;position:relative;transition:transform .2s}
+.pricing-card:hover{transform:translateY(-4px)}
+.pricing-card.featured{border-color:var(--gold);background:linear-gradient(160deg,var(--card2) 0%,rgba(200,169,110,.04) 100%)}
+.pricing-feat-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--gold),var(--gold2));color:#07070f;font-size:10px;font-weight:700;padding:4px 16px;border-radius:50px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.pricing-name{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:600;color:var(--cream);margin-bottom:.3rem}
+.pricing-desc{font-size:12px;color:var(--text2);margin-bottom:1.8rem;line-height:1.6}
+.pricing-amount{font-family:'Cormorant Garamond',serif;font-size:2.6rem;font-weight:700;color:var(--cream)}
+.pricing-period{font-size:14px;color:var(--text2)}
+.pricing-eur{font-size:12px;color:var(--text3);margin-bottom:1.5rem}
+.pricing-features{list-style:none;display:flex;flex-direction:column;gap:9px;margin-bottom:2rem}
+.pricing-features li{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--text2)}
+.pricing-features li::before{content:'';width:16px;height:16px;border-radius:50%;background:rgba(46,204,138,.12);border:1px solid rgba(46,204,138,.25);flex-shrink:0;background-image:url("data:image/svg+xml,%3Csvg width='10' height='8' viewBox='0 0 10 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 4L3.5 6.5L9 1' stroke='%232ecc8a' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:center}
+.acte-table{width:100%;border-collapse:collapse;margin-top:2rem}
+.acte-table th{background:var(--card2);padding:12px 16px;text-align:left;font-size:12px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.06em}
+.acte-table th:first-child{border-radius:var(--r) 0 0 0}
+.acte-table th:last-child{border-radius:0 var(--r) 0 0;text-align:right}
+.acte-table td{padding:13px 16px;border-bottom:1px solid var(--border2);font-size:13px;color:var(--text2)}
+.acte-table td:first-child{color:var(--cream);font-weight:400}
+.acte-table td:last-child{text-align:right}
+.acte-table tr:hover td{background:var(--card2)}
+.td-price{font-weight:600;color:var(--gold) !important}
+.td-eur{font-size:11px;color:var(--text3)}
+.td-order{background:rgba(200,169,110,.08);border:1px solid rgba(200,169,110,.18);color:var(--gold);font-size:11px;font-weight:500;padding:5px 12px;border-radius:6px;cursor:pointer;transition:all .2s;white-space:nowrap}
+.td-order:hover{background:var(--gold);color:#07070f}
+.fee-box{background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.18);border-radius:var(--r);padding:1.2rem 1.5rem;display:flex;gap:12px;align-items:flex-start;margin-top:2rem}
+.fee-box p{font-size:13px;color:var(--text2);line-height:1.7}
+.fee-box strong{color:var(--orange)}
+
+/* ═══════════════════════════════════════
+   PAGE 4 — ORDER / GENERATE
+═══════════════════════════════════════ */
+.order-layout{display:grid;grid-template-columns:1fr 420px;gap:2rem;padding-top:100px;min-height:100vh;align-items:start}
+.order-form-panel{background:var(--card);border:1px solid var(--border2);border-radius:var(--r2);overflow:hidden}
+.order-form-header{padding:1.8rem 2rem 1.2rem;border-bottom:1px solid var(--border2)}
+.order-form-header h2{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:600;color:var(--cream);margin-bottom:.3rem}
+.order-form-header p{font-size:13px;color:var(--text2)}
+.order-form-body{padding:1.8rem 2rem}
+.order-summary-panel{position:sticky;top:90px}
+.summary-card{background:var(--card);border:1px solid var(--border2);border-radius:var(--r2);padding:1.8rem}
+.summary-title{font-size:13px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:1.2rem}
+.summary-service{display:flex;gap:12px;align-items:center;padding:1rem;background:var(--surface);border-radius:var(--r);margin-bottom:1.2rem}
+.summary-svc-icon{width:40px;height:40px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:rgba(200,169,110,.1)}
+.summary-svc-name{font-size:14px;font-weight:500;color:var(--cream)}
+.summary-svc-cat{font-size:11px;color:var(--text2)}
+.summary-row{display:flex;justify-content:space-between;font-size:13px;color:var(--text2);padding:6px 0}
+.summary-row.total{color:var(--cream);font-weight:600;font-size:15px;padding-top:10px;border-top:1px solid var(--border2);margin-top:4px}
+.summary-fee-row{color:var(--orange)}
+.format-pills{display:flex;gap:8px;flex-wrap:wrap;margin:1rem 0}
+.format-pill{background:var(--surface);border:1px solid var(--border2);color:var(--text2);font-size:12px;padding:6px 14px;border-radius:20px;cursor:pointer;transition:all .2s}
+.format-pill.sel{background:var(--gold);border-color:var(--gold);color:#07070f;font-weight:600}
+.lang-pills{display:flex;gap:7px;flex-wrap:wrap;margin:1rem 0}
+.lang-pill{background:var(--surface);border:1px solid var(--border2);color:var(--text2);font-size:12px;padding:6px 14px;border-radius:20px;cursor:pointer;transition:all .2s}
+.lang-pill.sel{background:rgba(200,169,110,.2);border-color:var(--gold);color:var(--gold);font-weight:500}
+.order-fee-notice{background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.15);border-radius:9px;padding:10px 14px;font-size:12px;color:var(--orange);line-height:1.6;margin:1rem 0}
+.service-selector{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:1.5rem}
+.svc-select-btn{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:12px;cursor:pointer;transition:all .2s;text-align:left}
+.svc-select-btn:hover{border-color:var(--border);background:var(--card2)}
+.svc-select-btn.sel{border-color:var(--gold);background:rgba(200,169,110,.06)}
+.svc-select-btn .ico{font-size:20px;display:block;margin-bottom:5px}
+.svc-select-btn .nm{font-size:13px;font-weight:500;color:var(--cream)}
+.svc-select-btn .pr{font-size:11px;color:var(--gold)}
+
+/* GENERATING STATE */
+.generating-overlay{
+  position:fixed;inset:0;z-index:9998;
+  background:rgba(7,7,15,.92);backdrop-filter:blur(12px);
+  display:none;align-items:center;justify-content:center;flex-direction:column;gap:1.5rem;
+  text-align:center;
+}
+.generating-overlay.show{display:flex}
+.gen-spinner{
+  width:64px;height:64px;border-radius:50%;
+  border:2px solid var(--border2);
+  border-top-color:var(--gold);
+  animation:spin 1s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.gen-text{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:500;color:var(--cream)}
+.gen-sub{font-size:14px;color:var(--text2)}
+.gen-bar{width:300px;height:3px;background:var(--border2);border-radius:2px;overflow:hidden}
+.gen-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:2px;width:0%;transition:width .3s}
+
+/* SUCCESS */
+.success-page{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;text-align:center;padding:2rem}
+.success-icon{width:80px;height:80px;border-radius:50%;background:rgba(46,204,138,.1);border:2px solid var(--green);display:flex;align-items:center;justify-content:center;font-size:2.2rem;margin-bottom:1.5rem}
+.success-page h2{font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:600;color:var(--cream);margin-bottom:.8rem}
+.success-page p{font-size:15px;color:var(--text2);max-width:400px;line-height:1.8;margin-bottom:2rem}
+.download-options{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center}
+
+/* ═══════════════════════════════════════
+   PAGE 5 — DASHBOARD
+═══════════════════════════════════════ */
+.dashboard-layout{display:grid;grid-template-columns:240px 1fr;gap:0;min-height:100vh}
+.dash-sidebar{background:var(--surface);border-right:1px solid var(--border2);padding:90px 0 2rem;position:sticky;top:0;height:100vh;overflow-y:auto}
+.dash-nav-item{display:flex;align-items:center;gap:10px;padding:11px 1.5rem;font-size:13px;color:var(--text2);cursor:pointer;transition:all .2s;border-left:2px solid transparent}
+.dash-nav-item:hover{background:rgba(200,169,110,.05);color:var(--text)}
+.dash-nav-item.active{color:var(--gold);border-left-color:var(--gold);background:rgba(200,169,110,.05)}
+.dash-nav-section{font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);padding:.6rem 1.5rem;margin-top:.5rem}
+.dash-content{padding:90px 2.5rem 3rem;overflow-y:auto}
+.dash-welcome{margin-bottom:2rem}
+.dash-welcome h1{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:600;color:var(--cream)}
+.dash-welcome p{font-size:14px;color:var(--text2);margin-top:.3rem}
+.dash-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem}
+.dash-stat{background:var(--card);border:1px solid var(--border2);border-radius:var(--r);padding:1.2rem 1.4rem}
+.dash-stat-label{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem}
+.dash-stat-value{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:600;color:var(--cream)}
+.dash-stat-sub{font-size:11px;color:var(--green);margin-top:.2rem}
+.doc-history{background:var(--card);border:1px solid var(--border2);border-radius:var(--r2);overflow:hidden}
+.doc-history-header{padding:1.2rem 1.5rem;border-bottom:1px solid var(--border2);display:flex;justify-content:space-between;align-items:center}
+.doc-history-header h3{font-size:14px;font-weight:500;color:var(--cream)}
+.doc-row{display:grid;grid-template-columns:auto 1fr auto auto auto;gap:1rem;align-items:center;padding:1rem 1.5rem;border-bottom:1px solid var(--border2);transition:background .2s}
+.doc-row:hover{background:var(--card2)}
+.doc-row:last-child{border-bottom:none}
+.doc-type-icon{width:36px;height:36px;border-radius:8px;background:rgba(200,169,110,.1);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.doc-name{font-size:13px;font-weight:500;color:var(--cream)}
+.doc-date{font-size:11px;color:var(--text2);margin-top:2px}
+.doc-status{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:500}
+.doc-status.done{background:rgba(46,204,138,.1);color:var(--green)}
+.doc-format{font-size:11px;color:var(--text2);background:var(--surface);padding:3px 9px;border-radius:5px}
+.doc-dl{background:none;border:1px solid var(--border2);color:var(--text2);font-size:11px;padding:5px 12px;border-radius:6px;cursor:pointer;transition:all .2s}
+.doc-dl:hover{border-color:var(--gold);color:var(--gold)}
+
+/* Plan usage */
+.plan-usage{background:var(--card);border:1px solid var(--border2);border-radius:var(--r2);padding:1.5rem;margin-bottom:1.5rem}
+.usage-bar-track{height:6px;background:var(--surface);border-radius:3px;margin:.5rem 0}
+.usage-bar-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--gold),var(--gold2))}
+
+/* ═══════════════════════════════════════
+   PAGE 6 — AUTH (Login / Register)
+═══════════════════════════════════════ */
+.auth-layout{min-height:100vh;display:grid;grid-template-columns:1fr 1fr}
+.auth-left{
+  background:var(--surface);border-right:1px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;padding:2rem;
+  position:relative;overflow:hidden;
+}
+.auth-left-bg{
+  position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 70% at 50% 50%,rgba(200,169,110,.06) 0%,transparent 70%);
+}
+.auth-left-content{position:relative;z-index:1;max-width:380px;text-align:center}
+.auth-left h2{font-family:'Cormorant Garamond',serif;font-size:2.5rem;font-weight:600;color:var(--cream);margin-bottom:1rem;line-height:1.2}
+.auth-left p{font-size:14px;color:var(--text2);line-height:1.8;margin-bottom:2rem}
+.auth-feature{display:flex;align-items:center;gap:10px;padding:.7rem 0;border-bottom:1px solid var(--border2);text-align:left}
+.auth-feature:last-child{border-bottom:none}
+.auth-feature-icon{width:32px;height:32px;border-radius:8px;background:rgba(200,169,110,.08);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.auth-feature p{font-size:13px;color:var(--text2)}
+.auth-right{display:flex;align-items:center;justify-content:center;padding:2rem;background:var(--bg)}
+.auth-form-wrap{width:100%;max-width:420px}
+.auth-logo{display:flex;align-items:center;gap:9px;margin-bottom:2.5rem;cursor:pointer}
+.auth-tabs{display:flex;gap:0;background:var(--surface);border-radius:var(--r);padding:4px;margin-bottom:2rem}
+.auth-tab{flex:1;padding:9px;border-radius:9px;background:none;border:none;font-size:14px;color:var(--text2);cursor:pointer;transition:all .2s;font-family:'Outfit',sans-serif}
+.auth-tab.active{background:var(--card);color:var(--cream);font-weight:500}
+.auth-divider{display:flex;align-items:center;gap:1rem;margin:1.5rem 0}
+.auth-divider span{font-size:12px;color:var(--text3);white-space:nowrap}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border2)}
+.social-btn{width:100%;background:var(--surface);border:1px solid var(--border2);border-radius:9px;padding:11px;font-size:14px;color:var(--text2);cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:10px;font-family:'Outfit',sans-serif;margin-bottom:.7rem}
+.social-btn:hover{border-color:var(--border);color:var(--cream)}
+.auth-note{font-size:12px;color:var(--text3);text-align:center;margin-top:1.5rem;line-height:1.7}
+.auth-note a{color:var(--gold);cursor:pointer}
+
+/* ═══════════════════════════════════════
+   PAGE 7 — ABOUT
+═══════════════════════════════════════ */
+.about-hero{padding:130px 2rem 80px;background:var(--surface);border-bottom:1px solid var(--border2)}
+.about-mission{padding:80px 2rem;background:var(--bg)}
+.about-values{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:3rem}
+.value-card{background:var(--card);border:1px solid var(--border2);border-radius:var(--r2);padding:2rem}
+.value-num{font-family:'Cormorant Garamond',serif;font-size:3rem;font-weight:700;color:rgba(200,169,110,.15);line-height:1;margin-bottom:.5rem}
+.value-card h3{font-size:15px;font-weight:500;color:var(--cream);margin-bottom:.5rem}
+.value-card p{font-size:13px;color:var(--text2);line-height:1.7}
+.market-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem;margin-top:3rem}
+.market-card{background:var(--card);border:1px solid var(--border2);border-radius:var(--r2);padding:2rem}
+.market-stat{font-family:'Cormorant Garamond',serif;font-size:2.5rem;font-weight:700;color:var(--gold);margin-bottom:.5rem}
+.market-card h4{font-size:14px;font-weight:500;color:var(--cream);margin-bottom:.4rem}
+.market-card p{font-size:13px;color:var(--text2);line-height:1.7}
+.roadmap{display:flex;flex-direction:column;gap:0;margin-top:3rem}
+.roadmap-item{display:grid;grid-template-columns:120px 1px 1fr;gap:0;padding-bottom:2.5rem;position:relative}
+.road-period{font-size:13px;font-weight:500;color:var(--gold);padding-right:2rem;padding-top:.2rem;text-align:right}
+.road-line{background:var(--border2);position:relative}
+.road-dot{width:10px;height:10px;border-radius:50%;background:var(--gold);position:absolute;top:.2rem;left:-4px}
+.road-content{padding-left:2rem}
+.road-content h4{font-size:14px;font-weight:500;color:var(--cream);margin-bottom:.3rem}
+.road-content p{font-size:12px;color:var(--text2);line-height:1.7}
+
+/* ═══════════════════════════════════════
+   PAGE 8 — CONTACT
+═══════════════════════════════════════ */
+.contact-layout{display:grid;grid-template-columns:1fr 1.2fr;gap:4rem;padding-top:130px;padding-bottom:80px;align-items:start}
+.contact-info h2{font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:600;color:var(--cream);margin-bottom:1rem;line-height:1.2}
+.contact-info p{font-size:14px;color:var(--text2);line-height:1.8;margin-bottom:2rem}
+.contact-method{display:flex;align-items:center;gap:14px;padding:1.2rem;background:var(--card);border:1px solid var(--border2);border-radius:var(--r);margin-bottom:1rem;cursor:pointer;transition:all .2s}
+.contact-method:hover{border-color:var(--border)}
+.contact-method-icon{width:40px;height:40px;border-radius:9px;background:rgba(200,169,110,.08);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.contact-method-info h4{font-size:13px;font-weight:500;color:var(--cream);margin-bottom:2px}
+.contact-method-info p{font-size:12px;color:var(--text2)}
+.contact-form-card{background:var(--card);border:1px solid var(--border2);border-radius:var(--r2);padding:2.5rem}
+.contact-form-card h3{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:600;color:var(--cream);margin-bottom:.5rem}
+.contact-form-card p{font-size:13px;color:var(--text2);margin-bottom:1.5rem}
+.faq-item{border-bottom:1px solid var(--border2);padding:1.2rem 0;cursor:pointer}
+.faq-q{display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:500;color:var(--cream)}
+.faq-a{font-size:13px;color:var(--text2);line-height:1.7;margin-top:.8rem;display:none}
+.faq-item.open .faq-a{display:block}
+.faq-item.open .faq-arrow{transform:rotate(180deg)}
+.faq-arrow{transition:transform .2s;color:var(--text2);font-size:12px}
+
+/* ═══ FOOTER ═══ */
+footer{background:var(--surface);border-top:1px solid var(--border2);padding:60px 2rem 28px}
+.foot-grid{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:3rem}
+.foot-logo{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:600;color:var(--cream);margin-bottom:.8rem}
+.foot-desc{font-size:13px;color:var(--text2);line-height:1.8;margin-bottom:1.2rem}
+.foot-col h4{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:1rem}
+.foot-col a{display:block;font-size:13px;color:var(--text2);margin-bottom:.6rem;cursor:pointer;transition:color .2s}
+.foot-col a:hover{color:var(--cream)}
+.foot-bottom{max-width:1180px;margin:2.5rem auto 0;padding-top:1.2rem;border-top:1px solid var(--border2);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.8rem}
+.foot-bottom p{font-size:12px;color:var(--muted)}
+.foot-langs{display:flex;gap:6px}
+.foot-lang{font-size:11px;color:var(--text2);background:var(--card);padding:3px 9px;border-radius:4px;border:1px solid var(--border2);cursor:pointer}
+
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:1024px){
+  .dashboard-layout{grid-template-columns:1fr}
+  .dash-sidebar{display:none}
+  .order-layout{grid-template-columns:1fr}
+  .auth-layout{grid-template-columns:1fr}
+  .auth-left{display:none}
+  .contact-layout{grid-template-columns:1fr}
+  .foot-grid{grid-template-columns:1fr 1fr}
+  .pricing-grid{grid-template-columns:1fr}
+  .plans-preview{grid-template-columns:1fr}
+  .how-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:768px){
+  .nav-links{display:none}
+  .how-grid{grid-template-columns:1fr}
+  .grid2,.grid3,.grid4{grid-template-columns:1fr}
+  .trust-grid{grid-template-columns:1fr}
+  .about-values{grid-template-columns:1fr}
+  .form-grid2{grid-template-columns:1fr}
+  .hero h1{font-size:2.8rem}
+  .service-selector{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ NAV ═══ -->
+<nav id="navbar">
+  <div class="logo" onclick="showPage('home')">
+    <div class="logo-mark">S</div>
+    <span class="logo-text">Scrivia</span>
+  </div>
+  <ul class="nav-links">
+    <li><a onclick="showPage('home')" id="nav-home">Accueil</a></li>
+    <li><a onclick="showPage('services')" id="nav-services">Services</a></li>
+    <li><a onclick="showPage('pricing')" id="nav-pricing">Tarifs</a></li>
+    <li><a onclick="showPage('about')" id="nav-about">À propos</a></li>
+    <li><a onclick="showPage('contact')" id="nav-contact">Contact</a></li>
+  </ul>
+  <div class="nav-right">
+    <div class="nav-user" id="navUser">
+      <div class="nav-avatar" title="Mon compte" onclick="showPage('dashboard')">KM</div>
+      <button class="btn btn-ghost" onclick="logout()">Déconnexion</button>
+    </div>
+    <div id="navGuest">
+      <button class="btn btn-ghost" onclick="showPage('auth')" style="margin-right:8px">Connexion</button>
+      <button class="btn btn-gold" onclick="showPage('auth')">Commencer gratuitement</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════ PAGE: HOME ═══════════════════════════ -->
+<div class="page active" id="page-home">
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-grid"></div>
+    <div class="hero-inner">
+      <div class="hero-badge"><span class="pulse"></span>22 services IA disponibles maintenant</div>
+      <h1>Vos documents <em>professionnels</em>,<br>générés en 60 secondes.</h1>
+      <p>CV, plans d'affaire, plans de maison, statuts juridiques, dossiers de financement — tous vos documents officiels créés par l'IA, mis en page, téléchargeables immédiatement.</p>
+      <div class="hero-actions">
+        <button class="btn btn-gold btn-lg" onclick="showPage('services')">Explorer les services →</button>
+        <button class="btn btn-ghost btn-lg" onclick="showPage('pricing')">Voir les tarifs</button>
+      </div>
+      <div class="hero-stats">
+        <div><div class="hero-stat-n">22+</div><div class="hero-stat-l">Services automatisés</div></div>
+        <div><div class="hero-stat-n">60s</div><div class="hero-stat-l">Délai de génération</div></div>
+        <div><div class="hero-stat-n">6</div><div class="hero-stat-l">Langues disponibles</div></div>
+        <div><div class="hero-stat-n">PDF</div><div class="hero-stat-l">Word · Excel · PPT</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="section" style="background:var(--surface)">
+    <div class="container">
+      <span class="section-tag">Comment ça fonctionne</span>
+      <h2 class="section-title">Simple, rapide, professionnel.</h2>
+      <p class="section-sub">En quatre étapes, votre document est généré, mis en page et prêt à l'emploi.</p>
+      <div class="how-grid">
+        <div class="how-step">
+          <div class="how-num">01</div>
+          <div class="how-icon">📋</div>
+          <h3>Choisissez votre document</h3>
+          <p>Sélectionnez parmi 22 types de documents dans 6 catégories métier.</p>
+        </div>
+        <div class="how-step">
+          <div class="how-num">02</div>
+          <div class="how-icon">✍️</div>
+          <h3>Remplissez le formulaire</h3>
+          <p>Répondez aux questions intelligentes de l'IA en 3 à 5 minutes.</p>
+        </div>
+        <div class="how-step">
+          <div class="how-num">03</div>
+          <div class="how-icon">⚡</div>
+          <h3>L'IA génère en 60 secondes</h3>
+          <p>Notre IA rédige, structure et met en page votre document complet.</p>
+        </div>
+        <div class="how-step" style="border-right:none">
+          <div class="how-num">04</div>
+          <div class="how-icon">📥</div>
+          <h3>Téléchargez & utilisez</h3>
+          <p>PDF, Word, Excel ou PowerPoint — prêt à soumettre ou imprimer.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURED SERVICES -->
+  <section class="section" style="background:var(--bg)">
+    <div class="container">
+      <div class="section-header">
+        <div>
+          <span class="section-tag">Services populaires</span>
+          <h2 class="section-title">Documents les plus demandés</h2>
+        </div>
+        <button class="btn btn-ghost" onclick="showPage('services')">Voir tous les services →</button>
+      </div>
+      <div class="feat-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));border:1px solid var(--border2);border-radius:var(--r2);overflow:hidden">
+        <div class="feat-card" onclick="goOrder('cv','CV Professionnel','👤','Carrière',4900,7)">
+          <div class="badge badge-hot" style="margin-bottom:.8rem">⚡ Populaire</div>
+          <div class="feat-icon" style="background:rgba(140,100,255,.12)">👤</div>
+          <h3>CV Professionnel</h3>
+          <p>CV ATS-compatible, structuré et percutant. Optimisé pour chaque poste.</p>
+          <div class="feat-price">4 900 FCFA <span class="feat-eur">≈ 7 €</span></div>
+        </div>
+        <div class="feat-card" onclick="goOrder('plan_affaire','Plan d\'Affaire Complet','📊','Business',24900,38)">
+          <div class="badge badge-hot" style="margin-bottom:.8rem">⭐ Premium</div>
+          <div class="feat-icon" style="background:rgba(46,204,138,.12)">📊</div>
+          <h3>Plan d'affaire complet</h3>
+          <p>10 chapitres : marché, stratégie, financier, opérationnel. Prêt pour les banques.</p>
+          <div class="feat-price">24 900 FCFA <span class="feat-eur">≈ 38 €</span></div>
+        </div>
+        <div class="feat-card" onclick="goOrder('archi','Programme Architectural','🏠','Architecture',19900,30)">
+          <div class="badge badge-new" style="margin-bottom:.8rem">🆕 Exclusif</div>
+          <div class="feat-icon" style="background:rgba(200,169,110,.12)">🏠</div>
+          <h3>Programme architectural</h3>
+          <p>Description complète pièce par pièce, surfaces, matériaux, devis estimatif.</p>
+          <div class="feat-price">19 900 FCFA <span class="feat-eur">≈ 30 €</span></div>
+        </div>
+        <div class="feat-card" onclick="goOrder('statuts','Statuts de Société','📜','Juridique',19900,30)">
+          <div class="badge badge-gold" style="margin-bottom:.8rem">⚖️ Juridique</div>
+          <div class="feat-icon" style="background:rgba(255,84,80,.12)">📜</div>
+          <h3>Statuts de société</h3>
+          <p>Conformes au droit OHADA. SARL, SA, SAS pour toute l'Afrique francophone.</p>
+          <div class="feat-price">19 900 FCFA <span class="feat-eur">≈ 30 €</span></div>
+        </div>
+        <div class="feat-card" onclick="goOrder('pitch','Pitch Deck Investisseurs','📈','Business',19900,30)">
+          <div class="badge badge-hot" style="margin-bottom:.8rem">⭐ Premium</div>
+          <div class="feat-icon" style="background:rgba(79,127,255,.12)">📈</div>
+          <h3>Pitch Deck investisseurs</h3>
+          <p>12 slides structurées pour convaincre les investisseurs et bailleurs de fonds.</p>
+          <div class="feat-price">19 900 FCFA <span class="feat-eur">≈ 30 €</span></div>
+        </div>
+        <div class="feat-card" onclick="goOrder('financement','Dossier de Financement','🏛️','Juridique',24900,38)">
+          <div class="badge badge-hot" style="margin-bottom:.8rem">⭐ Premium</div>
+          <div class="feat-icon" style="background:rgba(79,127,255,.12)">🏛️</div>
+          <h3>Dossier de financement</h3>
+          <p>Dossier complet pour obtenir un crédit bancaire ou un investissement.</p>
+          <div class="feat-price">24 900 FCFA <span class="feat-eur">≈ 38 €</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLANS PREVIEW -->
+  <section class="section" style="background:var(--surface)">
+    <div class="container">
+      <div class="section-header">
+        <div>
+          <span class="section-tag">Abonnements</span>
+          <h2 class="section-title">Vous avez des besoins réguliers ?</h2>
+        </div>
+        <button class="btn btn-ghost" onclick="showPage('pricing')">Voir tous les tarifs →</button>
+      </div>
+      <div class="plans-preview">
+        <div class="plan-mini">
+          <div class="plan-mini-name">Starter</div>
+          <div class="plan-mini-price">9 900 <span class="plan-mini-period">FCFA/mois</span></div>
+          <div class="plan-mini-feat">5 documents · PDF · Support email</div>
+          <div style="margin-top:1.2rem"><button class="btn btn-outline btn-full" onclick="showPage('auth')">Commencer</button></div>
+        </div>
+        <div class="plan-mini feat">
+          <div style="text-align:center;margin-bottom:.5rem"><span class="badge badge-gold">Le plus choisi</span></div>
+          <div class="plan-mini-name">Pro</div>
+          <div class="plan-mini-price">24 900 <span class="plan-mini-period">FCFA/mois</span></div>
+          <div class="plan-mini-feat">20 documents · PDF+Word+Excel · Support prioritaire</div>
+          <div style="margin-top:1.2rem"><button class="btn btn-gold btn-full" onclick="showPage('auth')">Commencer</button></div>
+        </div>
+        <div class="plan-mini">
+          <div class="plan-mini-name">Business</div>
+          <div class="plan-mini-price">59 900 <span class="plan-mini-period">FCFA/mois</span></div>
+          <div class="plan-mini-feat">Illimité · API · Multi-utilisateurs · SLA 99.9%</div>
+          <div style="margin-top:1.2rem"><button class="btn btn-outline btn-full" onclick="showPage('contact')">Nous contacter</button></div>
+        </div>
+      </div>
+      <div class="fee-box" style="margin-top:2rem">
+        <span style="font-size:16px;flex-shrink:0">ℹ️</span>
+        <p><strong>Frais de transaction :</strong> Un frais de <strong>8%</strong> est appliqué par notre partenaire de paiement sur chaque transaction. Ce montant est affiché clairement avant toute confirmation de commande.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRUST -->
+  <section class="section" style="background:var(--bg)">
+    <div class="container">
+      <span class="section-tag">Pourquoi Scrivia</span>
+      <h2 class="section-title">Conçu pour le monde entier,<br>pensé pour l'Afrique francophone.</h2>
+      <div class="trust-grid">
+        <div class="trust-item"><div class="trust-icon">⚡</div><div><h4>Génération en 60 secondes</h4><p>Là où un humain prend des jours, Scrivia génère votre document complet en moins d'une minute.</p></div></div>
+        <div class="trust-item"><div class="trust-icon">📥</div><div><h4>Formats prêts à l'emploi</h4><p>PDF, Word, Excel, PowerPoint — des fichiers formatés, professionnels, prêts à soumettre ou imprimer.</p></div></div>
+        <div class="trust-item"><div class="trust-icon">🌍</div><div><h4>Intelligence locale</h4><p>Droit OHADA, marchés UEMOA, prix de construction locaux, bailleurs africains — on connaît votre contexte.</p></div></div>
+        <div class="trust-item"><div class="trust-icon">🔒</div><div><h4>Paiements sécurisés</h4><p>Wave, Orange Money, MTN Money, carte bancaire — tous les modes de paiement disponibles.</p></div></div>
+        <div class="trust-item"><div class="trust-icon">🌐</div><div><h4>6 langues disponibles</h4><p>Français, anglais, espagnol, portugais, arabe, allemand — vos documents dans la langue de votre choix.</p></div></div>
+        <div class="trust-item"><div class="trust-icon">🤖</div><div><h4>IA de dernière génération</h4><p>Propulsé par les modèles les plus avancés du marché pour des résultats de qualité professionnelle.</p></div></div>
+      </div>
+    </div>
+  </section>
+  <div id="home-footer"></div>
+</div>
+
+<!-- ═══════════════════════════ PAGE: SERVICES ═══════════════════════════ -->
+<div class="page" id="page-services">
+  <div class="page-hero">
+    <div class="container">
+      <span class="section-tag">Catalogue complet</span>
+      <h1 class="section-title">22 documents. Une seule plateforme.</h1>
+      <p class="section-sub">Tous vos documents professionnels générés par l'IA — mis en page, téléchargeables en PDF, Word ou Excel.</p>
+    </div>
+  </div>
+  <section class="section">
+    <div class="container">
+      <div class="cat-tabs">
+        <button class="cat-tab active" onclick="filterServices('all',this)">Tous (22)</button>
+        <button class="cat-tab" onclick="filterServices('carriere',this)">Carrière & CV</button>
+        <button class="cat-tab" onclick="filterServices('business',this)">Business</button>
+        <button class="cat-tab" onclick="filterServices('archi',this)">Architecture</button>
+        <button class="cat-tab" onclick="filterServices('juridique',this)">Juridique</button>
+        <button class="cat-tab" onclick="filterServices('traduction',this)">Traduction</button>
+        <button class="cat-tab" onclick="filterServices('appels',this)">Appels d'offres</button>
+        <button class="cat-tab" onclick="filterServices('academique',this)">Académique</button>
+      </div>
+      <div id="servicesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1px;border:1px solid var(--border2);border-radius:var(--r2);overflow:hidden">
+        <!-- JS injecté -->
+      </div>
+    </div>
+  </section>
+  <div id="services-footer"></div>
+</div>
+
+<!-- ═══════════════════════════ PAGE: PRICING ═══════════════════════════ -->
+<div class="page" id="page-pricing">
+  <div class="page-hero">
+    <div class="container">
+      <span class="section-tag">Tarifs transparents</span>
+      <h1 class="section-title">Des prix clairs, sans surprise.</h1>
+      <p class="section-sub">Deux options : achat à l'acte ou abonnement mensuel. Les frais de transaction de 8% sont toujours affichés avant paiement.</p>
+    </div>
+  </div>
+
+  <!-- ABONNEMENTS -->
+  <section class="section" style="background:var(--bg)">
+    <div class="container">
+      <span class="section-tag">Abonnements mensuels</span>
+      <h2 class="section-title">Choisissez votre plan</h2>
+      <div class="pricing-grid">
+        <div class="pricing-card">
+          <div class="pricing-name">Starter</div>
+          <div class="pricing-desc">Pour les particuliers avec des besoins réguliers.</div>
+          <div><span class="pricing-amount">9 900</span><span class="pricing-period"> FCFA / mois</span></div>
+          <div class="pricing-eur">≈ 14 € / mois</div>
+          <div class="divider"></div>
+          <ul class="pricing-features">
+            <li>5 documents générés par mois</li>
+            <li>Accès à toutes les catégories</li>
+            <li>Téléchargement PDF inclus</li>
+            <li>Traduction de documents</li>
+            <li>Support par email</li>
+          </ul>
+          <button class="btn btn-outline btn-full" onclick="showPage('auth')">Commencer gratuitement</button>
+        </div>
+        <div class="pricing-card featured">
+          <div class="pricing-feat-badge">Le plus choisi</div>
+          <div class="pricing-name">Pro</div>
+          <div class="pricing-desc">Pour les entrepreneurs et professionnels actifs.</div>
+          <div><span class="pricing-amount">24 900</span><span class="pricing-period"> FCFA / mois</span></div>
+          <div class="pricing-eur">≈ 37 € / mois</div>
+          <div class="divider"></div>
+          <ul class="pricing-features">
+            <li>20 documents par mois</li>
+            <li>PDF + Word + Excel + PowerPoint</li>
+            <li>Traductions illimitées</li>
+            <li>Historique complet de vos documents</li>
+            <li>Support prioritaire 48h</li>
+          </ul>
+          <button class="btn btn-gold btn-full" onclick="showPage('auth')">Commencer</button>
+        </div>
+        <div class="pricing-card">
+          <div class="pricing-name">Business</div>
+          <div class="pricing-desc">Pour les agences, cabinets et institutions.</div>
+          <div><span class="pricing-amount">59 900</span><span class="pricing-period"> FCFA / mois</span></div>
+          <div class="pricing-eur">≈ 89 € / mois</div>
+          <div class="divider"></div>
+          <ul class="pricing-features">
+            <li>Documents illimités chaque mois</li>
+            <li>Accès API pour intégration</li>
+            <li>5 comptes utilisateurs inclus</li>
+            <li>Tous formats + branding personnalisé</li>
+            <li>Gestionnaire dédié + SLA 99.9%</li>
+          </ul>
+          <button class="btn btn-outline btn-full" onclick="showPage('contact')">Nous contacter</button>
+        </div>
+      </div>
+      <div class="fee-box">
+        <span style="font-size:16px;flex-shrink:0">⚠️</span>
+        <p><strong>Information sur les frais de transaction :</strong> Un frais de traitement de <strong>8%</strong> est appliqué sur chaque transaction par notre partenaire de paiement. Ce montant est affiché clairement avant la confirmation de chaque commande. Exemple : pour un service à 9 900 FCFA, les frais sont de 792 FCFA, soit un total de 10 692 FCFA. Les prix des abonnements incluent également ces frais affichés au moment de la souscription.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- À L'ACTE -->
+  <section class="section" style="background:var(--surface)">
+    <div class="container">
+      <span class="section-tag">Prix à l'acte</span>
+      <h2 class="section-title">Payez uniquement ce dont vous avez besoin</h2>
+      <p class="section-sub">Sans abonnement. Commandez un document, payez, téléchargez immédiatement.</p>
+      <table class="acte-table">
+        <thead>
+          <tr>
+            <th>Service</th>
+            <th>Catégorie</th>
+            <th>Prix FCFA</th>
+            <th>Prix €</th>
+            <th style="text-align:right">Commander</th>
+          </tr>
+        </thead>
+        <tbody id="acteTableBody"><!-- JS injecté --></tbody>
+      </table>
+    </div>
+  </section>
+  <div id="pricing-footer"></div>
+</div>
+
+<!-- ═══════════════════════════ PAGE: ORDER ═══════════════════════════ -->
+<div class="page" id="page-order">
+  <div style="padding:0 2rem 4rem">
+    <div class="container">
+      <div class="order-layout">
+        <!-- FORM -->
+        <div>
+          <div class="order-form-panel">
+            <div class="order-form-header">
+              <h2 id="orderTitle">Générer un document</h2>
+              <p id="orderDesc">Remplissez le formulaire — votre document sera prêt en 60 secondes.</p>
+            </div>
+            <div class="order-form-body">
+              <!-- Service selector si pas de service sélectionné -->
+              <div id="serviceSelector">
+                <p style="font-size:13px;color:var(--text2);margin-bottom:1rem">Choisissez un service :</p>
+                <div class="service-selector" id="serviceSelectorGrid"><!-- JS injecté --></div>
+              </div>
+              <!-- Form fields -->
+              <div id="orderFields" style="display:none"></div>
+              <!-- Langue -->
+              <div id="orderLangSection" style="display:none">
+                <div class="divider"></div>
+                <p class="form-label">Langue du document</p>
+                <div class="lang-pills">
+                  <span class="lang-pill sel" onclick="selectLang(this,'fr')">🇫🇷 Français</span>
+                  <span class="lang-pill" onclick="selectLang(this,'en')">🇬🇧 English</span>
+                  <span class="lang-pill" onclick="selectLang(this,'es')">🇪🇸 Español</span>
+                  <span class="lang-pill" onclick="selectLang(this,'pt')">🇵🇹 Português</span>
+                  <span class="lang-pill" onclick="selectLang(this,'ar')">🇸🇦 العربية</span>
+                  <span class="lang-pill" onclick="selectLang(this,'de')">🇩🇪 Deutsch</span>
+                </div>
+              </div>
+              <!-- Format -->
+              <div id="orderFormatSection" style="display:none">
+                <div class="divider"></div>
+                <p class="form-label">Format de téléchargement</p>
+                <div class="format-pills">
+                  <span class="format-pill sel" onclick="selectFormat(this,'pdf')">📄 PDF</span>
+                  <span class="format-pill" onclick="selectFormat(this,'docx')">📝 Word (.docx)</span>
+                  <span class="format-pill" onclick="selectFormat(this,'xlsx')">📊 Excel (.xlsx)</span>
+                  <span class="format-pill" onclick="selectFormat(this,'pptx')">📑 PowerPoint</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUMMARY -->
+        <div class="order-summary-panel">
+          <div class="summary-card">
+            <div class="summary-title">Résumé de la commande</div>
+            <div class="summary-service" id="summaryService">
+              <div style="width:40px;height:40px;border-radius:9px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">✦</div>
+              <div>
+                <div style="font-size:13px;color:var(--text2)">Sélectionnez un service</div>
+                <div style="font-size:11px;color:var(--text3)">pour voir les détails</div>
+              </div>
+            </div>
+            <div id="summaryPrices" style="display:none">
+              <div class="summary-row"><span>Prix du service</span><span id="summBase">—</span></div>
+              <div class="summary-row summary-fee-row"><span>⚠️ Frais de transaction (8%)</span><span id="summFee">—</span></div>
+              <div class="summary-row total"><span>Total à payer</span><span id="summTotal">—</span></div>
+            </div>
+            <div class="divider"></div>
+            <div class="order-fee-notice">⚠️ Les frais de 8% sont prélevés par notre partenaire de paiement. Ce montant est non remboursable et s'ajoute au prix affiché.</div>
+            <div class="divider"></div>
+            <p class="form-label" style="margin-bottom:.6rem">Mode de paiement</p>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:1.2rem">
+              <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:10px 14px;font-size:13px;color:var(--text2);display:flex;align-items:center;gap:10px;cursor:pointer">📱 Wave · Orange Money · MTN Money</div>
+              <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:10px 14px;font-size:13px;color:var(--text2);display:flex;align-items:center;gap:10px;cursor:pointer">💳 Carte bancaire (Visa / Mastercard)</div>
+            </div>
+            <button class="btn btn-gold btn-full btn-lg" id="generateBtn" onclick="startGeneration()" disabled style="opacity:.4">
+              Générer mon document
+            </button>
+            <p style="font-size:11px;color:var(--text3);text-align:center;margin-top:.8rem">Paiement sécurisé · Livraison instantanée</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ PAGE: SUCCESS ═══════════════════════════ -->
+<div class="page" id="page-success">
+  <div class="success-page">
+    <div class="success-icon">✓</div>
+    <h2>Document généré avec succès !</h2>
+    <p>Votre document professionnel est prêt. Choisissez votre format de téléchargement ci-dessous.</p>
+    <div class="download-options">
+      <button class="btn btn-green btn-lg">📄 Télécharger en PDF</button>
+      <button class="btn btn-ghost btn-lg">📝 Télécharger en Word</button>
+    </div>
+    <div style="margin-top:2rem;display:flex;gap:1rem;flex-wrap:wrap;justify-content:center">
+      <button class="btn btn-outline" onclick="showPage('order')">Générer un autre document</button>
+      <button class="btn btn-outline" onclick="showPage('dashboard')">Voir mon tableau de bord</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ PAGE: DASHBOARD ═══════════════════════════ -->
+<div class="page" id="page-dashboard">
+  <div class="dashboard-layout">
+    <div class="dash-sidebar">
+      <div class="dash-nav-section">Principal</div>
+      <div class="dash-nav-item active" onclick="showDashTab('overview',this)">📊 Vue d'ensemble</div>
+      <div class="dash-nav-item" onclick="showDashTab('documents',this)">📄 Mes documents</div>
+      <div class="dash-nav-item" onclick="goOrder('','Nouveau document','✦','',0,0)">➕ Nouveau document</div>
+      <div class="dash-nav-section">Compte</div>
+      <div class="dash-nav-item" onclick="showDashTab('plan',this)">💎 Mon abonnement</div>
+      <div class="dash-nav-item" onclick="showDashTab('settings',this)">⚙️ Paramètres</div>
+      <div class="dash-nav-item" onclick="showPage('contact')">💬 Support</div>
+      <div style="position:absolute;bottom:2rem;left:0;right:0;padding:0 1rem">
+        <button class="btn btn-outline btn-full" onclick="logout()" style="font-size:12px">Déconnexion</button>
+      </div>
+    </div>
+    <div class="dash-content">
+      <!-- OVERVIEW TAB -->
+      <div id="dash-overview">
+        <div class="dash-welcome">
+          <h1>Bonjour, Kofi 👋</h1>
+          <p>Voici un résumé de votre activité sur Scrivia.</p>
+        </div>
+        <div class="dash-stats">
+          <div class="dash-stat"><div class="dash-stat-label">Documents générés</div><div class="dash-stat-value">7</div><div class="dash-stat-sub">↑ 3 ce mois</div></div>
+          <div class="dash-stat"><div class="dash-stat-label">Documents restants</div><div class="dash-stat-value">13</div><div class="dash-stat-sub">Plan Pro · 20/mois</div></div>
+          <div class="dash-stat"><div class="dash-stat-label">Abonnement actif</div><div class="dash-stat-value" style="font-size:1.3rem">Pro</div><div class="dash-stat-sub">Renouvellement 28/04</div></div>
+          <div class="dash-stat"><div class="dash-stat-label">Total économisé</div><div class="dash-stat-value" style="font-size:1.3rem">87K</div><div class="dash-stat-sub" style="color:var(--gold)">vs achat à l'acte</div></div>
+        </div>
+        <div class="plan-usage" style="margin-bottom:1.5rem">
+          <div style="display:flex;justify-content:space-between;margin-bottom:.4rem">
+            <span style="font-size:13px;color:var(--cream)">Utilisation ce mois — Plan Pro</span>
+            <span style="font-size:13px;color:var(--gold)">7 / 20 documents</span>
+          </div>
+          <div class="usage-bar-track"><div class="usage-bar-fill" style="width:35%"></div></div>
+          <div style="font-size:11px;color:var(--text2)">13 documents restants · Renouvellement le 28 avril 2026</div>
+        </div>
+        <div class="doc-history">
+          <div class="doc-history-header">
+            <h3>Documents récents</h3>
+            <button class="btn btn-ghost" style="font-size:12px;padding:6px 14px" onclick="showDashTab('documents',null)">Voir tout</button>
+          </div>
+          <div class="doc-row">
+            <div class="doc-type-icon">👤</div>
+            <div><div class="doc-name">CV Professionnel — Kofi Mensah</div><div class="doc-date">28 mars 2026 · 14h32</div></div>
+            <span class="doc-status done">Prêt</span>
+            <span class="doc-format">PDF</span>
+            <button class="doc-dl">↓ Télécharger</button>
+          </div>
+          <div class="doc-row">
+            <div class="doc-type-icon">📊</div>
+            <div><div class="doc-name">Plan d'affaire — AgriTech Togo</div><div class="doc-date">25 mars 2026 · 09h15</div></div>
+            <span class="doc-status done">Prêt</span>
+            <span class="doc-format">Word</span>
+            <button class="doc-dl">↓ Télécharger</button>
+          </div>
+          <div class="doc-row">
+            <div class="doc-type-icon">🏠</div>
+            <div><div class="doc-name">Programme architectural — Villa 120m²</div><div class="doc-date">22 mars 2026 · 16h44</div></div>
+            <span class="doc-status done">Prêt</span>
+            <span class="doc-format">PDF</span>
+            <button class="doc-dl">↓ Télécharger</button>
+          </div>
+          <div class="doc-row">
+            <div class="doc-type-icon">📜</div>
+            <div><div class="doc-name">Statuts — TECH SOLUTIONS TOGO SARL</div><div class="doc-date">18 mars 2026 · 11h20</div></div>
+            <span class="doc-status done">Prêt</span>
+            <span class="doc-format">PDF</span>
+            <button class="doc-dl">↓ Télécharger</button>
+          </div>
+        </div>
+        <div style="margin-top:1.5rem;text-align:center">
+          <button class="btn btn-gold btn-lg" onclick="goOrder('','Nouveau document','✦','',0,0)">➕ Générer un nouveau document</button>
+        </div>
+      </div>
+
+      <!-- DOCUMENTS TAB -->
+      <div id="dash-documents" style="display:none">
+        <h2 style="font-family:'Cormorant Garamond',serif;font-size:1.8rem;color:var(--cream);margin-bottom:1.5rem">Mes documents</h2>
+        <div class="doc-history">
+          <div class="doc-history-header"><h3>Tous les documents (7)</h3></div>
+          <div class="doc-row"><div class="doc-type-icon">👤</div><div><div class="doc-name">CV Professionnel — Kofi Mensah</div><div class="doc-date">28 mars 2026</div></div><span class="doc-status done">Prêt</span><span class="doc-format">PDF</span><button class="doc-dl">↓ Télécharger</button></div>
+          <div class="doc-row"><div class="doc-type-icon">📊</div><div><div class="doc-name">Plan d'affaire — AgriTech Togo</div><div class="doc-date">25 mars 2026</div></div><span class="doc-status done">Prêt</span><span class="doc-format">Word</span><button class="doc-dl">↓ Télécharger</button></div>
+          <div class="doc-row"><div class="doc-type-icon">🏠</div><div><div class="doc-name">Programme architectural — Villa 120m²</div><div class="doc-date">22 mars 2026</div></div><span class="doc-status done">Prêt</span><span class="doc-format">PDF</span><button class="doc-dl">↓ Télécharger</button></div>
+          <div class="doc-row"><div class="doc-type-icon">📜</div><div><div class="doc-name">Statuts — TECH SOLUTIONS TOGO SARL</div><div class="doc-date">18 mars 2026</div></div><span class="doc-status done">Prêt</span><span class="doc-format">PDF</span><button class="doc-dl">↓ Télécharger</button></div>
+          <div class="doc-row"><div class="doc-type-icon">✉️</div><div><div class="doc-name">Lettre de motivation — Poste Manager</div><div class="doc-date">15 mars 2026</div></div><span class="doc-status done">Prêt</span><span class="doc-format">PDF</span><button class="doc-dl">↓ Télécharger</button></div>
+          <div class="doc-row"><div class="doc-type-icon">🌍</div><div><div class="doc-name">Traduction CV — FR vers EN</div><div class="doc-date">12 mars 2026</div></div><span class="doc-status done">Prêt</span><span class="doc-format">Word</span><button class="doc-dl">↓ Télécharger</button></div>
+          <div class="doc-row"><div class="doc-type-icon">💹</div><div><div class="doc-name">Prévisions financières 3 ans — AgriTech</div><div class="doc-date">10 mars 2026</div></div><span class="doc-status done">Prêt</span><span class="doc-format">Excel</span><button class="doc-dl">↓ Télécharger</button></div>
+        </div>
+      </div>
+
+      <!-- PLAN TAB -->
+      <div id="dash-plan" style="display:none">
+        <h2 style="font-family:'Cormorant Garamond',serif;font-size:1.8rem;color:var(--cream);margin-bottom:1.5rem">Mon abonnement</h2>
+        <div class="card" style="padding:2rem;margin-bottom:1.5rem;border-color:var(--gold)">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem">
+            <div>
+              <div class="badge badge-gold" style="margin-bottom:.8rem">Plan actif</div>
+              <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.8rem;color:var(--cream)">Plan Pro</h3>
+              <p style="font-size:13px;color:var(--text2);margin-top:.3rem">24 900 FCFA / mois · Renouvellement le 28 avril 2026</p>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:13px;color:var(--text2);margin-bottom:.5rem">Utilisation ce mois</div>
+              <div style="font-family:'Cormorant Garamond',serif;font-size:2rem;color:var(--gold)">7 / 20</div>
+              <div style="font-size:11px;color:var(--text2)">documents</div>
+            </div>
+          </div>
+          <div class="usage-bar-track" style="margin-top:1.2rem"><div class="usage-bar-fill" style="width:35%"></div></div>
+        </div>
+        <div class="grid3">
+          <div class="card card-hover" style="padding:1.5rem;cursor:pointer" onclick="showPage('pricing')">
+            <h4 style="color:var(--cream);font-size:14px;margin-bottom:.4rem">Passer au Business</h4>
+            <p style="font-size:12px;color:var(--text2)">Documents illimités, API, 5 comptes</p>
+            <div style="margin-top:1rem;font-size:13px;color:var(--gold)">59 900 FCFA/mois →</div>
+          </div>
+          <div class="card" style="padding:1.5rem">
+            <h4 style="color:var(--cream);font-size:14px;margin-bottom:.4rem">Annuler l'abonnement</h4>
+            <p style="font-size:12px;color:var(--text2)">Accès jusqu'à la fin de la période</p>
+            <div style="margin-top:1rem"><button class="btn btn-outline" style="font-size:12px">Annuler</button></div>
+          </div>
+          <div class="card" style="padding:1.5rem">
+            <h4 style="color:var(--cream);font-size:14px;margin-bottom:.4rem">Historique de facturation</h4>
+            <p style="font-size:12px;color:var(--text2)">Vos factures téléchargeables</p>
+            <div style="margin-top:1rem"><button class="btn btn-outline" style="font-size:12px">Voir les factures</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS TAB -->
+      <div id="dash-settings" style="display:none">
+        <h2 style="font-family:'Cormorant Garamond',serif;font-size:1.8rem;color:var(--cream);margin-bottom:1.5rem">Paramètres du compte</h2>
+        <div class="card" style="padding:2rem;margin-bottom:1.5rem">
+          <h3 style="font-size:15px;font-weight:500;color:var(--cream);margin-bottom:1.5rem">Informations personnelles</h3>
+          <div class="form-grid2">
+            <div class="form-group"><label class="form-label">Prénom</label><input class="form-input" value="Kofi"></div>
+            <div class="form-group"><label class="form-label">Nom</label><input class="form-input" value="Mensah"></div>
+            <div class="form-group form-full"><label class="form-label">Email</label><input class="form-input" value="kofi.mensah@email.com"></div>
+            <div class="form-group"><label class="form-label">Téléphone</label><input class="form-input" value="+228 92 09 25 72"></div>
+            <div class="form-group"><label class="form-label">Pays</label><select class="form-input"><option selected>Togo</option><option>Côte d'Ivoire</option><option>Sénégal</option><option>Cameroun</option></select></div>
+          </div>
+          <div style="margin-top:1rem"><button class="btn btn-gold">Sauvegarder les modifications</button></div>
+        </div>
+        <div class="card" style="padding:2rem">
+          <h3 style="font-size:15px;font-weight:500;color:var(--cream);margin-bottom:1.5rem">Sécurité</h3>
+          <div class="form-group"><label class="form-label">Mot de passe actuel</label><input class="form-input" type="password" placeholder="••••••••"></div>
+          <div class="form-group"><label class="form-label">Nouveau mot de passe</label><input class="form-input" type="password" placeholder="••••••••"></div>
+          <div style="margin-top:.5rem"><button class="btn btn-outline">Changer le mot de passe</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ PAGE: AUTH ═══════════════════════════ -->
+<div class="page" id="page-auth">
+  <div class="auth-layout">
+    <div class="auth-left">
+      <div class="auth-left-bg"></div>
+      <div class="auth-left-content">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:600;color:var(--cream);margin-bottom:.5rem">Scrivia</div>
+        <h2>Vos documents professionnels, en 60 secondes.</h2>
+        <p>Rejoignez des milliers de professionnels et entrepreneurs qui font confiance à Scrivia pour leurs documents officiels.</p>
+        <div class="divider"></div>
+        <div class="auth-feature"><div class="auth-feature-icon">⚡</div><p>Génération instantanée par IA de dernière génération</p></div>
+        <div class="auth-feature"><div class="auth-feature-icon">📥</div><p>PDF, Word, Excel et PowerPoint prêts à l'emploi</p></div>
+        <div class="auth-feature"><div class="auth-feature-icon">🌍</div><p>22 types de documents en 6 langues</p></div>
+        <div class="auth-feature" style="border:none"><div class="auth-feature-icon">🔒</div><p>Paiements sécurisés via Mobile Money et carte bancaire</p></div>
+      </div>
+    </div>
+    <div class="auth-right">
+      <div class="auth-form-wrap">
+        <div class="auth-logo" onclick="showPage('home')">
+          <div class="logo-mark">S</div>
+          <span style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:600;color:var(--cream)">Scrivia</span>
+        </div>
+        <div class="auth-tabs">
+          <button class="auth-tab active" id="loginTab" onclick="switchAuth('login')">Connexion</button>
+          <button class="auth-tab" id="registerTab" onclick="switchAuth('register')">Créer un compte</button>
+        </div>
+
+        <!-- LOGIN -->
+        <div id="loginForm">
+          <div class="social-btn"><span>G</span> Continuer avec Google</div>
+          <div class="auth-divider"><span>ou par email</span></div>
+          <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" placeholder="votre@email.com"></div>
+          <div class="form-group"><label class="form-label">Mot de passe</label><input class="form-input" type="password" placeholder="••••••••"></div>
+          <div style="text-align:right;margin-bottom:1.2rem"><a style="font-size:12px;color:var(--gold);cursor:pointer">Mot de passe oublié ?</a></div>
+          <button class="btn btn-gold btn-full btn-lg" onclick="login()">Se connecter</button>
+          <div class="auth-note">Pas encore de compte ? <a onclick="switchAuth('register')">Créer un compte gratuit</a></div>
+        </div>
+
+        <!-- REGISTER -->
+        <div id="registerForm" style="display:none">
+          <div class="social-btn"><span>G</span> Continuer avec Google</div>
+          <div class="auth-divider"><span>ou par email</span></div>
+          <div class="form-grid2">
+            <div class="form-group"><label class="form-label">Prénom</label><input class="form-input" placeholder="Kofi"></div>
+            <div class="form-group"><label class="form-label">Nom</label><input class="form-input" placeholder="Mensah"></div>
+          </div>
+          <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" placeholder="votre@email.com"></div>
+          <div class="form-group"><label class="form-label">Mot de passe</label><input class="form-input" type="password" placeholder="Au moins 8 caractères"></div>
+          <div class="form-group"><label class="form-label">Pays</label><select class="form-input"><option>Togo</option><option>Côte d'Ivoire</option><option>Sénégal</option><option>Cameroun</option><option>Bénin</option><option>Burkina Faso</option><option>Mali</option><option>Niger</option><option>Guinée</option><option>France</option><option>Autre</option></select></div>
+          <button class="btn btn-gold btn-full btn-lg" style="margin-top:.5rem" onclick="login()">Créer mon compte gratuit</button>
+          <div class="auth-note">En créant un compte, vous acceptez nos <a>Conditions d'utilisation</a> et notre <a>Politique de confidentialité</a>.<br>Votre 1er document est offert à l'inscription.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ PAGE: ABOUT ═══════════════════════════ -->
+<div class="page" id="page-about">
+  <div class="about-hero">
+    <div class="container" style="max-width:700px">
+      <span class="section-tag">Notre mission</span>
+      <h1 class="section-title">Le bureau de documents intelligent du monde francophone.</h1>
+      <p style="font-size:1.05rem;color:var(--text2);line-height:1.85;margin-top:1rem">Scrivia est né d'un constat simple : des millions de professionnels, entrepreneurs et étudiants africains et francophones passent des jours à rédiger des documents que l'IA peut générer en 60 secondes.</p>
+    </div>
+  </div>
+
+  <section class="section" style="background:var(--bg)">
+    <div class="container">
+      <span class="section-tag">Notre positionnement</span>
+      <h2 class="section-title">Pourquoi Scrivia est unique</h2>
+      <p class="section-sub">Nous occupons une position que personne d'autre n'occupe : un service mondial qui comprend réellement le contexte africain et francophone.</p>
+      <div class="about-values">
+        <div class="value-card">
+          <div class="value-num">01</div>
+          <h3>Pas juste du texte — des documents finis</h3>
+          <p>Contrairement à ChatGPT ou Gemini, Scrivia vous livre un document mis en page, structuré, avec le bon format (PDF, Word, Excel) — prêt à soumettre sans retouche.</p>
+        </div>
+        <div class="value-card">
+          <div class="value-num">02</div>
+          <h3>22 types de documents en un seul endroit</h3>
+          <p>De l'architecture au juridique, en passant par les finances et les appels d'offres — aucune autre plateforme ne regroupe autant de documents professionnels automatisés.</p>
+        </div>
+        <div class="value-card">
+          <div class="value-num">03</div>
+          <h3>Intelligence du contexte local</h3>
+          <p>Droit OHADA, marchés UEMOA, prix de construction en FCFA, bailleurs de fonds africains — notre IA connaît votre contexte, pas seulement le contexte occidental.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="background:var(--surface)">
+    <div class="container">
+      <span class="section-tag">Le marché</span>
+      <h2 class="section-title">Une opportunité massive</h2>
+      <div class="market-grid">
+        <div class="market-card">
+          <div class="market-stat">700M+</div>
+          <h4>Personnes en Afrique subsaharienne</h4>
+          <p>Un continent en pleine croissance économique avec un besoin massif de formalisation, d'accès aux financements et de professionnalisation.</p>
+        </div>
+        <div class="market-card">
+          <div class="market-stat">300M+</div>
+          <h4>Francophones dans le monde</h4>
+          <p>Dont la grande majorité n'a pas accès à des outils professionnels adaptés à leur langue et leur contexte juridique et économique.</p>
+        </div>
+        <div class="market-card">
+          <div class="market-stat">0</div>
+          <h4>Concurrents directs sérieux</h4>
+          <p>Personne ne propose une plateforme automatisée, mondiale, multi-documents, francophone et adaptée au contexte africain. C'est notre espace.</p>
+        </div>
+        <div class="market-card">
+          <div class="market-stat">60s</div>
+          <h4>Vs 2-7 jours pour un humain</h4>
+          <p>L'avantage de vitesse de Scrivia est imbattable. Ce qui prend des jours à un consultant ou un prestataire, Scrivia le fait en une minute.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="background:var(--bg)">
+    <div class="container" style="max-width:800px">
+      <span class="section-tag">Feuille de route</span>
+      <h2 class="section-title">Comment nous évoluons</h2>
+      <div class="roadmap">
+        <div class="roadmap-item">
+          <div class="road-period">Phase 1<br><span style="font-size:11px;color:var(--text2)">Mois 1-2</span></div>
+          <div class="road-line"><div class="road-dot"></div></div>
+          <div class="road-content"><h4>Lancement MVP</h4><p>22 services de génération, paiements Mobile Money, PDF/Word, 3 langues (FR, EN, PT).</p></div>
+        </div>
+        <div class="roadmap-item">
+          <div class="road-period">Phase 2<br><span style="font-size:11px;color:var(--text2)">Mois 3-5</span></div>
+          <div class="road-line"><div class="road-dot"></div></div>
+          <div class="road-content"><h4>Croissance & B2B</h4><p>Partenariats universités et agences, API Business, abonnements institutionnels, dashboard avancé.</p></div>
+        </div>
+        <div class="roadmap-item">
+          <div class="road-period">Phase 3<br><span style="font-size:11px;color:var(--text2)">Mois 6-12</span></div>
+          <div class="road-line"><div class="road-dot"></div></div>
+          <div class="road-content"><h4>Expansion internationale</h4><p>Application mobile, 6 langues complètes, extension CEMAC, marchés diaspora (France, Canada, Belgique).</p></div>
+        </div>
+        <div class="roadmap-item" style="padding-bottom:0">
+          <div class="road-period">Phase 4<br><span style="font-size:11px;color:var(--text2)">An 2+</span></div>
+          <div class="road-line"><div class="road-dot" style="background:var(--text3)"></div></div>
+          <div class="road-content"><h4>Plateforme mondiale</h4><p>Intégrations notariales et juridiques officielles, marketplace de services complémentaires, white-label.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <div id="about-footer"></div>
+</div>
+
+<!-- ═══════════════════════════ PAGE: CONTACT ═══════════════════════════ -->
+<div class="page" id="page-contact">
+  <section class="section">
+    <div class="container">
+      <div class="contact-layout">
+        <div class="contact-info">
+          <span class="section-tag">Nous contacter</span>
+          <h2>On est là pour vous aider.</h2>
+          <p>Une question sur un service, un problème technique, ou un projet d'intégration ? Notre équipe répond rapidement.</p>
+          <div class="contact-method"><div class="contact-method-icon">💬</div><div class="contact-method-info"><h4>WhatsApp</h4><p>+228 92 09 25 72 · Réponse rapide</p></div></div>
+          <div class="contact-method"><div class="contact-method-icon">📧</div><div class="contact-method-info"><h4>Email</h4><p>contact@scrivia.ai</p></div></div>
+          <div class="contact-method"><div class="contact-method-icon">🏢</div><div class="contact-method-info"><h4>Bureau</h4><p>Lomé, Togo · Afrique de l'Ouest</p></div></div>
+          <div style="margin-top:2.5rem">
+            <h3 style="font-size:15px;font-weight:500;color:var(--cream);margin-bottom:1.2rem">Questions fréquentes</h3>
+            <div class="faq-item" onclick="toggleFaq(this)">
+              <div class="faq-q">Mes documents sont-ils vraiment professionnels ? <span class="faq-arrow">▼</span></div>
+              <div class="faq-a">Oui. Scrivia utilise les modèles IA les plus avancés du marché, spécifiquement guidés pour produire des documents conformes aux standards professionnels, juridiques (droit OHADA) et bancaires de l'Afrique de l'Ouest.</div>
+            </div>
+            <div class="faq-item" onclick="toggleFaq(this)">
+              <div class="faq-q">Comment sont calculés les frais de 8% ? <span class="faq-arrow">▼</span></div>
+              <div class="faq-a">Les frais de 8% sont prélevés par notre partenaire de paiement sur chaque transaction. Ils sont calculés sur le prix du service et ajoutés au total. Exemple : service à 9 900 FCFA → frais de 792 FCFA → total 10 692 FCFA. Ces frais sont toujours affichés avant confirmation.</div>
+            </div>
+            <div class="faq-item" onclick="toggleFaq(this)">
+              <div class="faq-q">Puis-je modifier le document généré ? <span class="faq-arrow">▼</span></div>
+              <div class="faq-a">Oui. En choisissant le format Word (.docx) ou Excel (.xlsx), vous recevez un fichier entièrement modifiable. Le format PDF est idéal pour soumettre directement sans modification.</div>
+            </div>
+            <div class="faq-item" onclick="toggleFaq(this)">
+              <div class="faq-q">Y a-t-il un document offert à l'inscription ? <span class="faq-arrow">▼</span></div>
+              <div class="faq-a">Oui ! Chaque nouvel utilisateur bénéficie d'un document gratuit à l'inscription — CV, lettre de motivation ou traduction courte — pour tester la qualité de Scrivia sans engagement.</div>
+            </div>
+            <div class="faq-item" onclick="toggleFaq(this)" style="border:none">
+              <div class="faq-q">Proposez-vous des tarifs pour les institutions ? <span class="faq-arrow">▼</span></div>
+              <div class="faq-a">Oui. Pour les universités, agences de recrutement, cabinets juridiques et ONG, nous proposons des licences institutionnelles sur devis. Contactez-nous pour discuter de vos besoins spécifiques.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="contact-form-card">
+          <h3>Envoyer un message</h3>
+          <p>Nous vous répondons dans les 24 heures ouvrables.</p>
+          <div class="form-grid2">
+            <div class="form-group"><label class="form-label">Prénom</label><input class="form-input" placeholder="Votre prénom"></div>
+            <div class="form-group"><label class="form-label">Nom</label><input class="form-input" placeholder="Votre nom"></div>
+          </div>
+          <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" placeholder="votre@email.com"></div>
+          <div class="form-group"><label class="form-label">Sujet</label>
+            <select class="form-input">
+              <option>Question sur un service</option>
+              <option>Problème technique</option>
+              <option>Abonnement Business / API</option>
+              <option>Partenariat institutionnel</option>
+              <option>Facturation et paiement</option>
+              <option>Autre</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Message</label><textarea class="form-input" rows="5" placeholder="Décrivez votre question ou besoin..."></textarea></div>
+          <button class="btn btn-gold btn-full btn-lg" style="margin-top:.5rem">Envoyer le message</button>
+          <p style="font-size:12px;color:var(--text3);text-align:center;margin-top:1rem">Ou contactez-nous directement sur WhatsApp pour une réponse instantanée.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  <div id="contact-footer"></div>
+</div>
+
+<!-- GENERATING OVERLAY -->
+<div class="generating-overlay" id="genOverlay">
+  <div class="gen-spinner"></div>
+  <div class="gen-text">Génération en cours...</div>
+  <div class="gen-sub" id="genSubText">L'IA rédige votre document</div>
+  <div class="gen-bar"><div class="gen-bar-fill" id="genBarFill"></div></div>
+</div>
+
+<!-- FOOTER TEMPLATE -->
+<template id="footerTpl">
+  <footer>
+    <div class="foot-grid">
+      <div>
+        <div class="foot-logo">Scrivia</div>
+        <div class="foot-desc">La plateforme mondiale de génération automatique de documents professionnels. 22 services, 6 langues, 60 secondes.</div>
+        <div style="font-size:12px;color:var(--muted)">contact@scrivia.ai · +228 92 09 25 72</div>
+      </div>
+      <div class="foot-col">
+        <h4>Services</h4>
+        <a>CV Professionnel</a><a>Plan d'affaire</a><a>Architecture</a><a>Juridique</a><a>Traduction</a><a>Appels d'offres</a>
+      </div>
+      <div class="foot-col">
+        <h4>Plateforme</h4>
+        <a>Tarifs</a><a>Abonnements</a><a>API Business</a><a>Exemples</a>
+      </div>
+      <div class="foot-col">
+        <h4>Légal</h4>
+        <a>Conditions d'utilisation</a><a>Confidentialité</a><a>Mentions légales</a><a>Remboursements</a>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <p>© 2026 Scrivia. Documents générés par IA — vérification recommandée pour usage juridique officiel.</p>
+      <div class="foot-langs"><span class="foot-lang">🇫🇷 FR</span><span class="foot-lang">🇬🇧 EN</span><span class="foot-lang">🇪🇸 ES</span><span class="foot-lang">🇵🇹 PT</span><span class="foot-lang">🇸🇦 AR</span></div>
+    </div>
+  </footer>
+</template>
+
+<script>
+/* ═══ DATA ═══ */
+const allServices = [
+  {id:'cv',cat:'carriere',icon:'👤',name:'CV Professionnel',desc:'CV ATS-compatible, structuré et percutant. Optimisé par mots-clés pour chaque poste visé.',fcfa:4900,eur:7,badge:'hot',badgeText:'⚡ Populaire',
+    fields:[{id:'nom',l:'Nom complet',ph:'Kofi Mensah'},{id:'poste',l:'Poste visé',ph:'Ingénieur informatique, Comptable...'},{id:'exp',l:'Expériences professionnelles',ph:'2020-2023 – Développeur chez TechCo. Projets réalisés...',ta:true},{id:'formation',l:'Formation & diplômes',ph:'2018 – Licence Informatique, Université de Lomé',ta:true},{id:'competences',l:'Compétences clés',ph:'Python, Excel, Gestion de projet, Leadership'},{id:'langues',l:'Langues parlées',ph:'Français (natif), Anglais (courant)'}]},
+  {id:'lettre',cat:'carriere',icon:'✉️',name:'Lettre de motivation',desc:'Lettre percutante et personnalisée pour chaque offre d\'emploi ou candidature.',fcfa:2900,eur:4,badge:'hot',badgeText:'⚡ Populaire',
+    fields:[{id:'nom',l:'Votre nom',ph:'Votre nom complet'},{id:'entreprise',l:'Entreprise cible',ph:'Nom de l\'entreprise'},{id:'poste',l:'Poste candidaté',ph:'Intitulé du poste'},{id:'atouts',l:'Vos atouts clés',ph:'Ce qui vous distingue...',ta:true},{id:'motivation',l:'Votre motivation',ph:'Pourquoi cette entreprise ?',ta:true}]},
+  {id:'linkedin',cat:'carriere',icon:'🔗',name:'Profil LinkedIn optimisé',desc:'Headline, section About, descriptions de postes et compétences pour LinkedIn.',fcfa:3900,eur:6,badge:'',badgeText:'',
+    fields:[{id:'nom',l:'Nom & prénom',ph:'Votre nom complet'},{id:'titre',l:'Titre professionnel',ph:'Ingénieur financier | Expert comptable'},{id:'exp',l:'Vos expériences',ph:'Postes, entreprises, réalisations clés...',ta:true},{id:'objectif',l:'Objectif professionnel',ph:'Obtenir un poste de directeur...'}]},
+  {id:'pack_carriere',cat:'carriere',icon:'🎯',name:'Pack CV + Lettre + LinkedIn',desc:'Les 3 documents carrière essentiels. Économisez 900 FCFA vs achat séparé.',fcfa:9900,eur:15,badge:'pack',badgeText:'💎 Pack',
+    fields:[{id:'nom',l:'Nom complet',ph:'Kofi Mensah'},{id:'poste',l:'Poste visé',ph:'Votre poste cible'},{id:'exp',l:'Expériences & Formation',ph:'Résumé de votre parcours...',ta:true},{id:'competences',l:'Compétences & Langues',ph:'Vos compétences principales'}]},
+  {id:'bmc',cat:'business',icon:'🧠',name:'Business Model Canvas',desc:'Les 9 blocs du BMC détaillés et personnalisés selon votre activité.',fcfa:9900,eur:15,badge:'',badgeText:'',
+    fields:[{id:'projet',l:'Nom du projet',ph:'Votre entreprise / startup'},{id:'secteur',l:'Secteur',ph:'Fintech, Agritech, Commerce...'},{id:'desc',l:'Ce que vous faites',ph:'Décrivez votre activité principale...',ta:true},{id:'clients',l:'Vos clients cibles',ph:'Qui paie pour votre service ?'}]},
+  {id:'plan_affaire',cat:'business',icon:'📊',name:'Plan d\'affaire complet',desc:'10 chapitres : marché, stratégie, plan opérationnel et financier. Prêt pour les banques.',fcfa:24900,eur:38,badge:'hot',badgeText:'⭐ Premium',
+    fields:[{id:'nom',l:'Nom du projet / entreprise',ph:'AgriTech Togo SA'},{id:'secteur',l:'Secteur d\'activité',ph:'Agriculture, Tech, Commerce...'},{id:'desc',l:'Description du projet',ph:'Décrivez votre activité principale...',ta:true},{id:'marche',l:'Marché cible & clients',ph:'Qui sont vos clients ? Quel territoire ?',ta:true},{id:'invest',l:'Investissement prévu',ph:'5 000 000 FCFA'},{id:'pays',l:'Pays / Région',ph:'Togo, UEMOA, Afrique de l\'Ouest'}]},
+  {id:'pitch',cat:'business',icon:'📈',name:'Pitch Deck investisseurs',desc:'12 slides structurées pour convaincre les investisseurs et bailleurs de fonds.',fcfa:19900,eur:30,badge:'hot',badgeText:'⭐ Premium',
+    fields:[{id:'startup',l:'Nom de la startup',ph:'Votre startup'},{id:'secteur',l:'Secteur',ph:'Fintech, Agritech, Santé...'},{id:'probleme',l:'Problème résolu',ph:'Quel problème douloureux ?',ta:true},{id:'solution',l:'Votre solution',ph:'Comment vous le résolvez ?',ta:true},{id:'traction',l:'Traction actuelle',ph:'500 utilisateurs, 3M FCFA de revenus...'},{id:'levee',l:'Montant de levée',ph:'50 000 000 FCFA'}]},
+  {id:'marketing',cat:'business',icon:'📣',name:'Plan marketing 12 mois',desc:'Stratégie complète : canaux, calendrier éditorial, budget et KPIs sur 12 mois.',fcfa:14900,eur:22,badge:'',badgeText:'',
+    fields:[{id:'entreprise',l:'Entreprise / Marque',ph:'Votre entreprise'},{id:'produit',l:'Produit / Service',ph:'Ce que vous vendez'},{id:'cible',l:'Cible client',ph:'Décrivez votre client idéal...',ta:true},{id:'budget',l:'Budget marketing annuel',ph:'2 000 000 FCFA'},{id:'objectifs',l:'Objectifs principaux',ph:'+300 clients, 10M CA, notoriété nationale'}]},
+  {id:'finances',cat:'business',icon:'💹',name:'Prévisions financières 3 ans',desc:'Compte de résultat, bilan et trésorerie prévisionnels sur 3 ans avec ratios clés.',fcfa:14900,eur:22,badge:'',badgeText:'',
+    fields:[{id:'entreprise',l:'Entreprise',ph:'Votre entreprise'},{id:'activite',l:'Activité principale',ph:'Secteur et produit/service principal'},{id:'ca',l:'CA prévisionnel Année 1',ph:'15 000 000 FCFA'},{id:'charges',l:'Charges principales',ph:'Loyer, employés, matières premières...',ta:true},{id:'invest',l:'Investissement initial',ph:'5 000 000 FCFA'}]},
+  {id:'pack_business',cat:'business',icon:'🏆',name:'Pack Business complet',desc:'Plan d\'affaire + BMC + Pitch Deck + Plan marketing + Prévisions financières.',fcfa:49900,eur:75,badge:'pack',badgeText:'💎 Pack économique',
+    fields:[{id:'nom',l:'Nom du projet',ph:'Votre entreprise / startup'},{id:'secteur',l:'Secteur',ph:'Votre secteur d\'activité'},{id:'desc',l:'Description complète',ph:'Décrivez votre projet en détail...',ta:true},{id:'pays',l:'Pays / Marché cible',ph:'Togo, UEMOA, Afrique de l\'Ouest'}]},
+  {id:'archi',cat:'archi',icon:'🏠',name:'Programme architectural',desc:'Description complète pièce par pièce, surfaces, orientation, matériaux recommandés.',fcfa:19900,eur:30,badge:'new',badgeText:'🆕 Exclusif',
+    fields:[{id:'type',l:'Type de maison',ph:'Villa moderne, Bungalow, Duplex...'},{id:'surface',l:'Surface souhaitée (m²)',ph:'120 m²'},{id:'pieces',l:'Pièces souhaitées',ph:'3 chambres, 2 salons, 2 WC, cuisine...'},{id:'terrain',l:'Dimensions du terrain',ph:'15m x 20m'},{id:'budget',l:'Budget de construction',ph:'15 000 000 FCFA'},{id:'besoins',l:'Besoins particuliers',ph:'Garage, terrasse, jardin, bureau...',ta:true}]},
+  {id:'devis',cat:'archi',icon:'🏗️',name:'Devis de construction',desc:'Estimation détaillée par lot de travaux avec prix adaptés au marché local (FCFA).',fcfa:14900,eur:22,badge:'hot',badgeText:'⭐ Premium',
+    fields:[{id:'type_trav',l:'Type de travaux',ph:'Construction neuve, Rénovation, Extension...'},{id:'surface',l:'Surface (m²)',ph:'100 m²'},{id:'localisation',l:'Localisation',ph:'Lomé, Abidjan, Dakar...'},{id:'standing',l:'Standing',ph:'Économique, Standard, Haut standing'},{id:'details',l:'Détails des travaux',ph:'Décrivez les travaux à réaliser...',ta:true}]},
+  {id:'cdc',cat:'archi',icon:'📐',name:'Cahier des charges technique',desc:'Spécifications pour chaque lot : matériaux, méthodes, contrôle qualité, réception.',fcfa:19900,eur:30,badge:'',badgeText:'',
+    fields:[{id:'projet',l:'Type de projet',ph:'Construction villa R+1, Rénovation...'},{id:'surface',l:'Surface (m²)',ph:'150 m²'},{id:'lots',l:'Lots de travaux concernés',ph:'Gros œuvre, plomberie, électricité...',ta:true},{id:'specs',l:'Spécifications souhaitées',ph:'Qualité des matériaux, normes...',ta:true}]},
+  {id:'permis',cat:'archi',icon:'📄',name:'Dossier permis de construire',desc:'Notice descriptive, courrier officiel, liste des pièces et déclarations administratives.',fcfa:24900,eur:38,badge:'new',badgeText:'🆕 Exclusif',
+    fields:[{id:'nom',l:'Nom du demandeur',ph:'Particulier ou société'},{id:'terrain',l:'Localisation du terrain',ph:'Adresse, quartier, commune'},{id:'type_c',l:'Nature des travaux',ph:'Construction d\'une villa R+0...'},{id:'surface_t',l:'Surface du terrain',ph:'400 m²'},{id:'surface_c',l:'Surface construite',ph:'120 m²'},{id:'pays',l:'Pays / Ville',ph:'Lomé - Togo'}]},
+  {id:'pack_archi',cat:'archi',icon:'🏰',name:'Pack Architecture complet',desc:'Programme + Devis + Cahier des charges + Dossier permis. Tout pour construire.',fcfa:59900,eur:90,badge:'pack',badgeText:'💎 Pack économique',
+    fields:[{id:'type',l:'Type de construction',ph:'Villa, immeuble, local commercial...'},{id:'surface',l:'Surface totale (m²)',ph:'150 m²'},{id:'localisation',l:'Lieu',ph:'Lomé, Togo'},{id:'budget',l:'Budget total',ph:'25 000 000 FCFA'},{id:'besoins',l:'Vos besoins spécifiques',ph:'Décrivez votre projet complet...',ta:true}]},
+  {id:'statuts',cat:'juridique',icon:'📜',name:'Statuts de société',desc:'Conformes au droit OHADA. SARL, SA, SAS pour toute l\'Afrique francophone.',fcfa:19900,eur:30,badge:'hot',badgeText:'⭐ Premium',
+    fields:[{id:'nom_s',l:'Nom de la société',ph:'TECH SOLUTIONS TOGO SARL'},{id:'forme',l:'Forme juridique',ph:'SARL, SA, SAS...'},{id:'objet',l:'Objet social (activité)',ph:'Commerce de matériels informatiques...',ta:true},{id:'capital',l:'Capital social',ph:'1 000 000 FCFA'},{id:'siege',l:'Siège social',ph:'Adresse complète'},{id:'pays',l:'Pays',ph:'Togo, Côte d\'Ivoire, Sénégal...'}]},
+  {id:'contrat',cat:'juridique',icon:'🤝',name:'Contrat commercial',desc:'Contrat de prestation, partenariat, NDA ou fourniture rédigé selon votre situation.',fcfa:12900,eur:19,badge:'',badgeText:'',
+    fields:[{id:'type_c',l:'Type de contrat',ph:'Prestation de services, Partenariat, NDA...'},{id:'partie1',l:'Partie 1 (vous)',ph:'Votre nom / société'},{id:'partie2',l:'Partie 2',ph:'Nom / société du co-contractant'},{id:'objet',l:'Objet du contrat',ph:'Décrivez ce qui est convenu...',ta:true},{id:'montant',l:'Montant / Rémunération',ph:'500 000 FCFA, 1 500 €...'}]},
+  {id:'financement',cat:'juridique',icon:'🏛️',name:'Dossier de financement bancaire',desc:'Dossier complet pour obtenir un crédit bancaire ou un investissement.',fcfa:24900,eur:38,badge:'hot',badgeText:'⭐ Premium',
+    fields:[{id:'projet',l:'Nom du projet',ph:'Votre projet/entreprise'},{id:'montant',l:'Montant demandé',ph:'25 000 000 FCFA'},{id:'objet',l:'Objet du financement',ph:'Équipements, fonds de roulement, construction...',ta:true},{id:'activite',l:'Activité de l\'entreprise',ph:'Décrivez votre activité et vos clients...',ta:true},{id:'garanties',l:'Garanties disponibles',ph:'Terrain, véhicule, caution personnelle...'},{id:'ca',l:'CA actuel ou prévisionnel',ph:'12 000 000 FCFA/an'}]},
+  {id:'trad_s',cat:'traduction',icon:'🌍',name:'Traduction (jusqu\'à 2 pages)',desc:'Traduction professionnelle de vos documents en FR, EN, ES, AR, PT ou DE.',fcfa:4900,eur:7,badge:'',badgeText:'',
+    fields:[{id:'texte',l:'Texte à traduire',ph:'Collez votre texte ici...',ta:true},{id:'src',l:'Langue source',ph:'Français, Anglais, Portugais...'},{id:'cible',l:'Langue cible',ph:'Anglais, Espagnol, Arabe...'},{id:'type_doc',l:'Type de document',ph:'CV, Contrat, Plan d\'affaire...'}]},
+  {id:'trad_l',cat:'traduction',icon:'🌐',name:'Traduction (jusqu\'à 10 pages)',desc:'Traduction complète de documents longs : rapports, contrats, plans d\'affaire.',fcfa:9900,eur:15,badge:'',badgeText:'',
+    fields:[{id:'texte',l:'Texte à traduire (ou description)',ph:'Collez votre texte ou décrivez le document...',ta:true},{id:'src',l:'Langue source',ph:'Français, Anglais...'},{id:'cible',l:'Langue cible',ph:'Anglais, Espagnol, Arabe...'},{id:'type_doc',l:'Type de document',ph:'Rapport, Contrat, Plan d\'affaire...'}]},
+  {id:'ao',cat:'appels',icon:'📬',name:'Réponse appel d\'offres',desc:'Offre technique et financière complète : méthodologie, équipe, planning et budget.',fcfa:29900,eur:45,badge:'hot',badgeText:'⭐ Premium',
+    fields:[{id:'entreprise',l:'Votre entreprise',ph:'Nom de votre société'},{id:'objet',l:'Objet de l\'appel d\'offres',ph:'Fourniture de matériels informatiques...'},{id:'client',l:'Client / Donneur d\'ordre',ph:'Ministère, ONG, Entreprise...'},{id:'budget',l:'Budget estimé',ph:'10 000 000 FCFA'},{id:'competences',l:'Vos compétences / références',ph:'Expériences similaires, certifications...',ta:true},{id:'approche',l:'Votre approche technique',ph:'Comment allez-vous réaliser cette mission ?',ta:true}]},
+  {id:'ong',cat:'appels',icon:'💡',name:'Dossier ONG / Subvention',desc:'Proposition de projet selon les standards des bailleurs internationaux.',fcfa:29900,eur:45,badge:'hot',badgeText:'⭐ Premium',
+    fields:[{id:'org',l:'Nom de l\'organisation',ph:'Votre ONG / Association'},{id:'bailleur',l:'Bailleur de fonds visé',ph:'PNUD, AFD, UE, USAID...'},{id:'projet',l:'Intitulé du projet',ph:'Titre du projet à financer'},{id:'problematique',l:'Problématique / besoin',ph:'Quel problème votre projet adresse-t-il ?',ta:true},{id:'activites',l:'Activités prévues',ph:'Quelles actions allez-vous mener ?',ta:true},{id:'budget',l:'Budget demandé',ph:'75 000 USD'},{id:'beneficiaires',l:'Bénéficiaires',ph:'500 femmes rurales, 1000 enfants...'}]},
+  {id:'rapport_stage',cat:'academique',icon:'📚',name:'Rapport de stage / PFE',desc:'Structure et contenu guidé par IA pour votre rapport de stage ou projet de fin d\'études.',fcfa:9900,eur:15,badge:'',badgeText:'',
+    fields:[{id:'nom',l:'Votre nom',ph:'Votre nom complet'},{id:'entreprise',l:'Entreprise d\'accueil',ph:'Société où vous avez effectué le stage'},{id:'poste',l:'Poste / Mission',ph:'Stage en développement informatique...'},{id:'activites',l:'Activités réalisées',ph:'Décrivez vos missions et réalisations...',ta:true},{id:'ecole',l:'École / Université',ph:'Université de Lomé, UCAO...'}]},
+  {id:'bourse',cat:'academique',icon:'🏆',name:'Dossier de bourse',desc:'Candidature optimisée par IA pour des programmes de bourses nationales ou internationales.',fcfa:12900,eur:19,badge:'',badgeText:'',
+    fields:[{id:'nom',l:'Votre nom',ph:'Votre nom complet'},{id:'bourse',l:'Programme de bourse visé',ph:'Eiffel, DAAD, Mastercard Foundation...'},{id:'formation',l:'Formation visée',ph:'Master en Informatique, MBA...'},{id:'parcours',l:'Votre parcours académique',ph:'Diplômes, mentions, résultats...',ta:true},{id:'motivation',l:'Votre motivation',ph:'Pourquoi cette bourse ?',ta:true}]},
+];
+
+let currentServiceId = null;
+let selectedLangVal = 'fr';
+let selectedFormatVal = 'pdf';
+let isLoggedIn = false;
+
+/* ═══ PAGE NAVIGATION ═══ */
+function showPage(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const target = document.getElementById('page-' + pageId);
+  if (target) target.classList.add('active');
+  window.scrollTo(0,0);
+
+  // Update nav active
+  document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+  const navEl = document.getElementById('nav-' + pageId);
+  if (navEl) navEl.classList.add('active');
+
+  // Inject footer
+  const tpl = document.getElementById('footerTpl');
+  ['home','services','pricing','about','contact'].forEach(p => {
+    const slot = document.getElementById(p + '-footer');
+    if (slot && slot.children.length === 0) {
+      slot.appendChild(tpl.content.cloneNode(true));
+    }
+  });
+
+  // Special logic
+  if (pageId === 'services') renderServicesPage();
+  if (pageId === 'pricing') renderPricingTable();
+  if (pageId === 'order') renderOrderPage();
+  if (pageId === 'dashboard' && !isLoggedIn) { showPage('auth'); return; }
+}
+
+/* ═══ SERVICES PAGE ═══ */
+function renderServicesPage() {
+  const grid = document.getElementById('servicesGrid');
+  if (!grid) return;
+  grid.innerHTML = allServices.map(s => `
+    <div class="svc-card" data-cat="${s.cat}">
+      <div class="svc-icon ic-${catColor(s.cat)}">${s.icon}</div>
+      ${s.badge ? `<div class="badge badge-${s.badge}" style="margin-bottom:.6rem">${s.badgeText}</div>` : ''}
+      <h3>${s.name}</h3>
+      <p>${s.desc}</p>
+      <div class="svc-footer">
+        <div>
+          <div class="svc-price-main">${s.fcfa.toLocaleString('fr-FR')} FCFA</div>
+          <div class="svc-price-sub">≈ ${s.eur} €</div>
+        </div>
+        <button class="svc-order-btn" onclick="goOrder('${s.id}','${s.name}','${s.icon}','${catLabel(s.cat)}',${s.fcfa},${s.eur})">Commander</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function catColor(cat) {
+  const m = {carriere:'purple',business:'teal',archi:'gold',juridique:'red',traduction:'blue',appels:'purple',academique:'teal'};
+  return m[cat] || 'gold';
+}
+function catLabel(cat) {
+  const m = {carriere:'Carrière',business:'Business',archi:'Architecture',juridique:'Juridique',traduction:'Traduction',appels:'Appels d\'offres',academique:'Académique'};
+  return m[cat] || cat;
+}
+
+function filterServices(cat, el) {
+  document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.svc-card').forEach(c => {
+    c.style.display = (cat === 'all' || c.dataset.cat === cat) ? 'flex' : 'none';
+  });
+}
+
+/* ═══ PRICING TABLE ═══ */
+function renderPricingTable() {
+  const tbody = document.getElementById('acteTableBody');
+  if (!tbody || tbody.children.length > 0) return;
+  allServices.forEach(s => {
+    const fee = Math.round(s.fcfa * 0.08);
+    const total = s.fcfa + fee;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${s.icon} ${s.name}</td>
+      <td><span style="font-size:11px;color:var(--text2)">${catLabel(s.cat)}</span></td>
+      <td><span class="td-price">${s.fcfa.toLocaleString('fr-FR')} FCFA</span><br><span class="td-eur">+8% frais → Total ${total.toLocaleString('fr-FR')} FCFA</span></td>
+      <td><span style="font-size:13px;color:var(--text2)">≈ ${s.eur} €</span></td>
+      <td><button class="td-order" onclick="goOrder('${s.id}','${s.name}','${s.icon}','${catLabel(s.cat)}',${s.fcfa},${s.eur})">Commander</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+/* ═══ ORDER PAGE ═══ */
+let currentOrderService = null;
+
+function goOrder(id, name, icon, cat, fcfa, eur) {
+  currentOrderService = allServices.find(s => s.id === id) || null;
+  showPage('order');
+}
+
+function renderOrderPage() {
+  // Service selector
+  const grid = document.getElementById('serviceSelectorGrid');
+  if (grid && grid.children.length === 0) {
+    const topServices = allServices.slice(0, 8);
+    grid.innerHTML = topServices.map(s => `
+      <button class="svc-select-btn" onclick="selectOrderService('${s.id}')">
+        <span class="ico">${s.icon}</span>
+        <span class="nm">${s.name}</span>
+        <span class="pr">${s.fcfa.toLocaleString('fr-FR')} FCFA</span>
+      </button>
+    `).join('');
+  }
+
+  if (currentOrderService) {
+    selectOrderService(currentOrderService.id);
+  }
+}
+
+function selectOrderService(id) {
+  currentOrderService = allServices.find(s => s.id === id);
+  if (!currentOrderService) return;
+
+  // Highlight
+  document.querySelectorAll('.svc-select-btn').forEach(b => b.classList.remove('sel'));
+  const found = [...document.querySelectorAll('.svc-select-btn')].find(b => b.onclick && b.onclick.toString().includes(`'${id}'`));
+  if (found) found.classList.add('sel');
+
+  // Update header
+  document.getElementById('orderTitle').textContent = currentOrderService.name;
+  document.getElementById('orderDesc').textContent = currentOrderService.desc;
+
+  // Inject fields
+  const fieldsDiv = document.getElementById('orderFields');
+  fieldsDiv.style.display = 'block';
+  fieldsDiv.innerHTML = '<div class="form-grid2">' + currentOrderService.fields.map((f,i) => `
+    <div class="form-group ${f.ta ? 'form-full' : ''}">
+      <label class="form-label">${f.l}</label>
+      ${f.ta
+        ? `<textarea class="form-input" placeholder="${f.ph}" rows="3"></textarea>`
+        : `<input class="form-input" type="text" placeholder="${f.ph}">`
+      }
+    </div>
+  `).join('') + '</div>';
+
+  // Show lang & format sections
+  document.getElementById('orderLangSection').style.display = 'block';
+  document.getElementById('orderFormatSection').style.display = 'block';
+
+  // Update summary
+  const fee = Math.round(currentOrderService.fcfa * 0.08);
+  const total = currentOrderService.fcfa + fee;
+  document.getElementById('summaryService').innerHTML = `
+    <div style="width:40px;height:40px;border-radius:9px;background:rgba(200,169,110,.1);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${currentOrderService.icon}</div>
+    <div>
+      <div style="font-size:13px;font-weight:500;color:var(--cream)">${currentOrderService.name}</div>
+      <div style="font-size:11px;color:var(--text2)">${catLabel(currentOrderService.cat)}</div>
+    </div>
+  `;
+  document.getElementById('summaryPrices').style.display = 'block';
+  document.getElementById('summBase').textContent = currentOrderService.fcfa.toLocaleString('fr-FR') + ' FCFA';
+  document.getElementById('summFee').textContent = fee.toLocaleString('fr-FR') + ' FCFA';
+  document.getElementById('summTotal').textContent = total.toLocaleString('fr-FR') + ' FCFA';
+
+  // Enable generate btn
+  const btn = document.getElementById('generateBtn');
+  btn.disabled = false;
+  btn.style.opacity = '1';
+  btn.innerHTML = `Générer mon document — ${total.toLocaleString('fr-FR')} FCFA`;
+}
+
+function startGeneration() {
+  const overlay = document.getElementById('genOverlay');
+  const fill = document.getElementById('genBarFill');
+  const sub = document.getElementById('genSubText');
+  overlay.classList.add('show');
+  const steps = ['L\'IA analyse votre demande...','Rédaction du contenu...','Structuration du document...','Mise en page professionnelle...','Finalisation et vérification...'];
+  let step = 0; let pct = 0;
+  const interval = setInterval(() => {
+    pct += 20;
+    fill.style.width = pct + '%';
+    if (step < steps.length) { sub.textContent = steps[step]; step++; }
+    if (pct >= 100) {
+      clearInterval(interval);
+      setTimeout(() => {
+        overlay.classList.remove('show');
+        showPage('success');
+      }, 500);
+    }
+  }, 600);
+}
+
+/* ═══ LANG / FORMAT ═══ */
+function selectLang(el, val) {
+  selectedLangVal = val;
+  el.closest('.lang-pills').querySelectorAll('.lang-pill').forEach(p => p.classList.remove('sel'));
+  el.classList.add('sel');
+}
+function selectFormat(el, val) {
+  selectedFormatVal = val;
+  el.closest('.format-pills').querySelectorAll('.format-pill').forEach(p => p.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+/* ═══ AUTH ═══ */
+function switchAuth(tab) {
+  document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
+  document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+  document.getElementById('loginTab').classList.toggle('active', tab === 'login');
+  document.getElementById('registerTab').classList.toggle('active', tab === 'register');
+}
+function login() {
+  isLoggedIn = true;
+  document.getElementById('navUser').classList.add('show');
+  document.getElementById('navGuest').style.display = 'none';
+  showPage('dashboard');
+}
+function logout() {
+  isLoggedIn = false;
+  document.getElementById('navUser').classList.remove('show');
+  document.getElementById('navGuest').style.display = 'flex';
+  showPage('home');
+}
+
+/* ═══ DASHBOARD TABS ═══ */
+function showDashTab(tab, el) {
+  ['overview','documents','plan','settings'].forEach(t => {
+    const el2 = document.getElementById('dash-' + t);
+    if (el2) el2.style.display = t === tab ? 'block' : 'none';
+  });
+  document.querySelectorAll('.dash-nav-item').forEach(i => i.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+
+/* ═══ FAQ ═══ */
+function toggleFaq(el) {
+  el.classList.toggle('open');
+}
+
+/* ═══ ICON BG STYLES (inline) ═══ */
+const styleSheet = document.createElement('style');
+styleSheet.textContent = `
+  .ic-purple{background:rgba(140,100,255,.12)}
+  .ic-teal{background:rgba(46,204,138,.12)}
+  .ic-gold{background:rgba(200,169,110,.12)}
+  .ic-red{background:rgba(255,84,80,.12)}
+  .ic-blue{background:rgba(79,127,255,.12)}
+`;
+document.head.appendChild(styleSheet);
+
+/* ═══ INIT ═══ */
+showPage('home');
+</script>
+</body>
+</html>
