@@ -1,0 +1,41 @@
+version: "3.8"
+
+services:
+  api:
+    build: .
+    container_name: scrivia-backend-api
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production
+      - PORT=8000
+      - DATABASE_URL=postgresql://scrivia_user:scrivia_secret_pass@db:5432/scrivia
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - CLAUDE_MODEL=claude-3-5-sonnet-20241022
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      - MAKETOU_API_KEY=${MAKETOU_API_KEY}
+      - MAKETOU_SECRET=${MAKETOU_SECRET}
+    depends_on:
+      - db
+    volumes:
+      - uploads_data:/app/uploads
+
+  db:
+    image: postgres:16-alpine
+    container_name: scrivia-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: scrivia_user
+      POSTGRES_PASSWORD: scrivia_secret_pass
+      POSTGRES_DB: scrivia
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
+  uploads_data:
