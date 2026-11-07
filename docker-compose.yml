@@ -2,40 +2,56 @@ version: "3.8"
 
 services:
   api:
-    build: .
-    container_name: scrivia-backend-api
-    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: scrivia-api
+    restart: unless-stopped
     ports:
       - "8000:8000"
+    env_file:
+      - .env
     environment:
       - ENVIRONMENT=production
       - PORT=8000
-      - DATABASE_URL=postgresql://scrivia_user:scrivia_secret_pass@db:5432/scrivia
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - CLAUDE_MODEL=claude-3-5-sonnet-20241022
-      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
-      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
-      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
-      - MAKETOU_API_KEY=${MAKETOU_API_KEY}
-      - MAKETOU_SECRET=${MAKETOU_SECRET}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-scrivia_user}:${POSTGRES_PASSWORD:-scrivia_secret_pass}@db:5432/${POSTGRES_DB:-scrivia}
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     volumes:
       - uploads_data:/app/uploads
+    networks:
+      - scrivia-network
 
   db:
     image: postgres:16-alpine
     container_name: scrivia-postgres
-    restart: always
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: scrivia_user
-      POSTGRES_PASSWORD: scrivia_secret_pass
-      POSTGRES_DB: scrivia
+      POSTGRES_USER: ${POSTGRES_USER:-scrivia_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-scrivia_secret_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-scrivia}
+    # Port 5432 lié exclusivement à localhost pour empêcher toute intrusion externe
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-scrivia_user} -d ${POSTGRES_DB:-scrivia}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - scrivia-network
 
 volumes:
   pgdata:
+    name: scrivia_pgdata
   uploads_data:
+    name: scrivia_uploads_data
+
+networks:
+  scrivia-network:
+    name: scrivia-network
+    driver: bridge

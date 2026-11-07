@@ -1,9 +1,14 @@
-﻿services:
+services:
   - type: web
-    name: portfolio-api
+    name: scrivia-backend-api
     runtime: python
-    plan: free
-    rootDir: backend
+    plan: standard
     buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 2 --proxy-headers
+    healthCheckPath: /health
     autoDeploy: false
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: PORT
+        value: 8000

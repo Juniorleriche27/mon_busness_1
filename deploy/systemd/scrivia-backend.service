@@ -1,0 +1,20 @@
+[Unit]
+Description=Scrivia FastAPI Backend Service
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/scrivia-backend
+EnvironmentFile=/var/www/scrivia-backend/.env
+ExecStart=/var/www/scrivia-backend/venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 2 --proxy-headers
+Restart=always
+RestartSec=5
+KillSignal=SIGQUIT
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=scrivia-backend
+
+[Install]
+WantedBy=multi-user.target
