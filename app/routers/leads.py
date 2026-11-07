@@ -1,17 +1,16 @@
 import os
 from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException
-import cohere
-from pymongo import MongoClient
 from app.config import settings
 
-router = APIRouter(tags=["Portfolio Legacy"])
+router = APIRouter(tags=["Portfolio & Leads"])
 
 
 def _get_collection(name: str):
     if not settings.MONGO_URI:
         return None
     try:
+        from pymongo import MongoClient
         client = MongoClient(settings.MONGO_URI, serverSelectionTimeoutMS=4000)
         return client[settings.MONGO_DB][name]
     except Exception:
@@ -43,13 +42,17 @@ def chat(payload: dict):
     reply = "Bonjour. Je suis votre assistant Scrivia. Comment puis-je vous aider aujourd'hui ?"
     if settings.COHERE_API_KEY and user_msg:
         try:
+            import cohere
             co = cohere.ClientV2(settings.COHERE_API_KEY)
             resp = co.chat(
                 model="command-a-03-2025",
                 messages=[{"role": "user", "content": user_msg}]
             )
-            reply = resp.message.content[0].text or reply
-        except Exception:
-            pass
+            for item in resp.message.content:
+                if getattr(item, "type", None) == "text":
+                    reply = item.text
+                    break
+        except Exception as e:
+            print(f"[Cohere Warning] {e}")
 
     return {"reply": reply}
