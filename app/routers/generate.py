@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
-from app.database import get_db
+from app.database import get_db, SessionLocal
 from app.models import User, Document
 from app.schemas import GenerateRequest, GenerateResponse
 from app.prompts.catalog import get_service_meta
@@ -18,45 +18,57 @@ def process_generation_task(
     service_id: str,
     fields: dict,
     language: str,
-    file_format: str,
-    db_session: Session
+    file_format: str
 ):
     """
     Tâche d'arrière-plan exécutée sur le serveur sans bloquer la requête HTTP.
+    Ouvre sa propre session de base de données indépendante du cycle HTTP.
     """
-    doc = db_session.query(Document).filter(Document.id == doc_id).first()
-    if not doc:
-        return
-
+    db = SessionLocal()
     try:
-        # 1. Rédiger le contenu avec Claude
+        doc = db.query(Document).filter(Document.id == doc_id).first()
+        if not doc:
+            return
+
+        meta = {
+            "doc_id": doc.id,
+            "language": language
+        }
+
+        # 1. Rédiger le contenu avec Claude (ou fallback intelligent)
         content = call_claude(service_id, fields, language)
         title = doc.service_name
 
-        # 2. Compiler dans le format demandé
+        # 2. Compiler dans le format haute définition demandé
         if file_format == "docx":
-            buffer = generate_docx(content, title)
+            buffer = generate_docx(content, title, metadata=meta)
             ext = "docx"
         elif file_format == "xlsx":
-            buffer = generate_xlsx(content, title)
+            buffer = generate_xlsx(content, title, metadata=meta)
             ext = "xlsx"
         else:
-            buffer = generate_pdf(content, title)
+            buffer = generate_pdf(content, title, metadata=meta)
             ext = "pdf"
 
-        # 3. Stocker le fichier
+        # 3. Stocker le fichier (Cloudinary ou filesystem local uploads/)
         filename = f"{doc.user_id}/{service_id}_{doc.id}.{ext}"
         file_url = upload_file(buffer, filename)
 
         # 4. Mettre à jour le statut du document
         doc.status = "DONE"
         doc.file_url = file_url
-        db_session.commit()
+        db.commit()
 
     except Exception as e:
         print(f"[Generation Error] {e}")
-        doc.status = "FAILED"
-        db_session.commit()
+        try:
+            if 'doc' in locals() and doc:
+                doc.status = "FAILED"
+                db.commit()
+        except Exception:
+            pass
+    finally:
+        db.close()
 
 
 @router.post("", response_model=GenerateResponse)
@@ -104,15 +116,14 @@ def generate_document_endpoint(
     db.commit()
     db.refresh(doc)
 
-    # Lancer la génération sur le serveur dédié
+    # Lancer la génération sur le serveur dédié en arrière-plan
     background_tasks.add_task(
         process_generation_task,
         doc.id,
         req.service_id,
         req.fields,
         req.language,
-        req.format,
-        db
+        req.format
     )
 
     return GenerateResponse(

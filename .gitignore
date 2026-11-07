@@ -1,14 +1,24 @@
-# Secrets (do not commit real keys)
+# Secrets & Config
+.env
 .streamlit/secrets.toml
 
 # Python
 __pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+
+# Uploads & Temp Data
+uploads/
+uploads_test/
+*.db
+*.sqlite3
+
+# IDE
 .vscode/
 *.code-workspace
-*.pyc
-
-# Env
-.conda/
-
-# Editor
-.vscode/
+.idea/
